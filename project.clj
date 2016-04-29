@@ -8,4 +8,5 @@
                  [claudio "0.1.3"]]
   :main ^:skip-aot mp3-update-scanner.core
   :target-path "target/%s"
+  :resource-paths ["resources"]
   :profiles {:uberjar {:aot :all}})

@@ -1,7 +1,8 @@
 (ns mp3-update-scanner.core
   (:gen-class)
   (:use clojure.java.io)
-  (:require id3))
+  (:require id3
+            [mp3-update-scanner.lastfm :as lastfm]))
 
 "structure:
 {
@@ -34,4 +35,6 @@
   (reduce (fn [acc x] (add-author-info x acc)) {} mp3-info))
 
 (defn -main
-  [& args])
+  [& args]
+  (println lastfm/private-key)
+  (println lastfm/api-key))
