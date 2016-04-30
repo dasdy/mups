@@ -93,3 +93,17 @@
     (is (not (author-is-listened {"a" 5})))
     (is (author-is-listened {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}))
     (is (not (author-is-listened {"a" 1 "b" 2 "c" 1})))))
+
+(deftest cli-args-tests
+  (testing "cli-args-values"
+    (is (= ["music" "cache" "out" "ignore"]
+           (parse-prog-options ["--ignore-path=ignore" "--output=out"
+                                "--music-path=music" "--cached-path=cache"])))
+    (is (= ["music" "cache" "cache" "ignore"]
+           (parse-prog-options ["--ignore-path=ignore"
+                                "--music-path=music" "--cached-path=cache"])))
+    (is (= ["music" nil "out.json" nil]
+           (parse-prog-options ["--music-path=music"])))
+    (is (validate-args ["music" nil "out.json" nil]))
+    (is (validate-args [nil "cache" nil nil]))
+    (is (not (validate-args [nil nil "out.json" "ignore.json"])))))

@@ -32,13 +32,16 @@
          ignorepath :ignore-path} (:options (parse-opts args cli-options))]
     [mpath cachepath (or output cachepath "out.json") ignorepath]))
 
-(defn -main
-  [& args]
-  (let [[mpath cachepath outputpath ignorepath] (parse-prog-options args)]
-    (if (not (or mpath cachepath))
-      (println (str "You must specify at least one of --music-path or --cached-path options"))
-      (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
-          (build-collection (if (and cachepath (.exists (file cachepath)))
-                              (read-collection cachepath)
-                              {}))
-          (save-collection outputpath)))))
+(defn validate-args [[mpath cachepath _ _ :as args]]
+  (if (not (or mpath cachepath))
+    (println (str "You must specify at least one of --music-path or --cached-path options"))
+    true))
+
+(defn -main [& args]
+  (let [[mpath cachepath outputpath ignorepath :as parsed-args] (parse-prog-options args)]
+   (when (validate-args parsed-args)
+     (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
+         (build-collection (if (and cachepath (.exists (file cachepath)))
+                             (read-collection cachepath)
+                             {}))
+         (save-collection outputpath)))))
