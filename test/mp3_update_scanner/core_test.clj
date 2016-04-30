@@ -1,6 +1,7 @@
 (ns mp3-update-scanner.core-test
   (:require [clojure.test :refer :all]
-            [mp3-update-scanner.core :refer :all]))
+            [mp3-update-scanner.core :refer :all]
+            [mp3-update-scanner.libscan :refer :all]))
 
 (deftest add-author-info-tests
   (testing "add-author to existing authors"

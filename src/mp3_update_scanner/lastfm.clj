@@ -4,5 +4,10 @@
 
 
 
-(def api-key (slurp (clojure.java.io/resource "api-key")))
-(def private-key (slurp (clojure.java.io/resource "shared-secret")))
+(def api-key (let [res (clojure.java.io/resource "api-key")]
+               (if (and res (.exists res)) (slurp res)
+                   (System/getenv "LASTFM_API"))))
+(def private-key (let [res (clojure.java.io/resource "shared-secret")]
+                   (if (and res (.exists res))
+                     (slurp res)
+                     (System/getenv "LASTFM_PRIVATEKEY"))))
