@@ -2,6 +2,7 @@
   (:gen-class)
   (:use clojure.java.io)
   (:require claudio.id3
+            [clojure.data.json :as json]
             [mp3-update-scanner.lastfm :as lastfm]))
 
 "structure:
@@ -48,11 +49,11 @@
   ;;   (.write wrtr (print (str collection))))
 
 
-  (spit path (str collection))
+  (spit path (json/write-str collection))
   )
 
 (defn read-collection [path]
-  (read-string (slurp path)))
+  (json/read-str (slurp path)))
 
 (defn remove-trailing-0 [string]
   (apply str (remove #(= (int %) 0) string)))
