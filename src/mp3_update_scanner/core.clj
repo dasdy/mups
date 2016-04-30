@@ -20,22 +20,25 @@
     :default nil]
    ["-c" "--cached-path PATH" "Path to collection if you have already scanned library"
     :default nil]
+   ["-o" "--output PATH" "Path to output (results of music scan). Should default to path of cached-path or, if not given, to out.json"
+    :default nil]
    ["-i" "--ignore-path PATH" "Path to ignore file"
     :default nil]])
 
 (defn parse-prog-options [args]
   (let [{mpath :music-path
          cachepath :cached-path
+         output :output
          ignorepath :ignore-path} (:options (parse-opts args cli-options))]
-    [mpath cachepath ignorepath]))
+    [mpath cachepath (or output cachepath "out.json") ignorepath]))
 
 (defn -main
   [& args]
-  (let [[mpath cachepath ignorepath] (parse-prog-options args)]
+  (let [[mpath cachepath outputpath ignorepath] (parse-prog-options args)]
     (if (not (or mpath cachepath))
       (println (str "You must specify at least one of --music-path or --cached-path options"))
       (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
           (build-collection (if (and cachepath (.exists (file cachepath)))
                               (read-collection cachepath)
                               {}))
-          (save-collection (or cachepath "out.json"))))))
+          (save-collection outputpath)))))
