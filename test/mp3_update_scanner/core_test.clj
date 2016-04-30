@@ -51,4 +51,25 @@
                                {:artist "author" :album "album"}
                                {:artist "author" :album "album2"}))
          {"author" {"album" 1 "album2" 1}
-            "author2" {"album" 1}}))))
+          "author2" {"album" 1}}))))
+
+(defn file-mock [path filename]
+  "object with getName and getPath properties, same as path"
+  (proxy [java.io.File] [path]
+    (getName [] filename)
+    (getPath [] (str path "/" filename))))
+
+(deftest scan-mp3-in-folder-tests
+  (let [folder "folder"
+        file-list (fn [& args] (map #(file-mock folder %) args))]
+   (testing "searching in folder without files"
+     (with-redefs [file-seq (constantly (file-list "file1" "file2"))]
+       (is (= (get-all-mp3-in-dir ".")
+              '())))
+     (with-redefs [file-seq (constantly (file-list))]
+       (is (= (get-all-mp3-in-dir ".")
+              '()))))
+   (testing "searching for files"
+     (with-redefs [file-seq (constantly (file-list "file1.mp3" "file2.mp3" "file3.mp3" "file4"))]
+       (is (= (set (map #(.getName %) (get-all-mp3-in-dir ".")))
+              #{"file1.mp3" "file2.mp3" "file3.mp3"}))))))

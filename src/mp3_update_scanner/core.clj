@@ -27,12 +27,21 @@
                  (file-seq (file dirpath)))))
 
 (defn get-all-mp3-in-dir [dir-path]
+  (walk "." #".*\.mp3"))
+
+(defn get-all-mp3-tags-in-dir [dir-path]
   (map #(id3/with-mp3 [mp3 (.getPath %)]
           (:tag mp3))
-       (walk "." #".*\.mp3")))
+       (get-all-mp3-in-dir dir-path)))
 
-(defn build-collection [mp3-info]
-  (reduce (fn [acc x] (add-author-info x acc)) {} mp3-info))
+(defn build-collection [mp3-info coll]
+  (reduce (fn [acc x] (add-author-info x acc)) coll mp3-info))
+
+(defn save-collection [collection path]
+  (spit path (str collection)))
+
+(defn read-collection [path]
+  (read-string (slurp path)))
 
 (defn -main
   [& args]
