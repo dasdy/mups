@@ -45,12 +45,17 @@
 (defn save-collection [collection path]
   (println (str "woah: " collection))
   (println (str "saving to:" path))
-  ;; (with-open [wrtr (writer path)]
-  ;;   (.write wrtr (print (str collection))))
+  (spit path (json/write-str collection)))
 
-
-  (spit path (json/write-str collection))
-  )
+(defn author-is-listened [author-info]
+  "check if user truly listens to this author
+   (to filter out those where there is only 1-2 songs)"
+  (let [total-songs (reduce + (vals author-info))
+        album-count (count author-info)
+        ]
+    (or (> total-songs 5)
+        (and (> album-count 1)
+             (every? #(> % 1) (vals author-info))))))
 
 (defn read-collection [path]
   (json/read-str (slurp path)))
