@@ -1,6 +1,6 @@
 (ns mp3-update-scanner.libscan
-  (:use clojure.java.io)
-  (:require claudio.id3))
+  (:require claudio.id3
+            [clojure.java.io :refer [file]]))
 
 
 "structure:
@@ -40,9 +40,10 @@
 (defn build-collection [mp3-info coll]
   (reduce (fn [acc x] (add-author-info x acc)) coll mp3-info))
 
-(defn author-is-listened [author-info]
+(defn author-is-listened
   "check if user truly listens to this author
    (to filter out those where there is only 1-2 songs)"
+  [author-info]
   (let [total-songs (reduce + (vals author-info))
         album-count (count author-info)]
     (or (> total-songs 5)

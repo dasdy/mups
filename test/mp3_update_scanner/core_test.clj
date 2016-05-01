@@ -61,8 +61,9 @@
          {"author" {"album" 11 "album2" 1}
           "author2" {"album" 1}}))))
 
-(defn file-mock [path filename]
+(defn file-mock
   "object with getName and getPath properties, same as path"
+  [path filename]
   (proxy [java.io.File] [path]
     (getName [] filename)
     (getPath [] (str path "/" filename))))

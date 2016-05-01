@@ -1,9 +1,9 @@
 (ns mp3-update-scanner.core
      (:gen-class)
-     (:use clojure.java.io
-           mp3-update-scanner.libscan)
+     (:use mp3-update-scanner.libscan)
      (:require [clojure.tools.cli :refer [parse-opts]]
                [clojure.data.json :as json]
+               [clojure.java.io :refer [file]]
                [mp3-update-scanner.lastfm :as lastfm]))
 
 (defn save-collection [collection path]
