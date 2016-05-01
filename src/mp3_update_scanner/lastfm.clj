@@ -32,7 +32,7 @@
   "transforming last.fm response into appropriate form"
   (reduce (fn [acc x] (assoc acc (get x "name") 1))
           {}
-          (get (get resp "topalbums") "album")))
+          (get (get lastfm-response "topalbums") "album")))
 
 
 
