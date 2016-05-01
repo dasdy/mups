@@ -1,13 +1,15 @@
 (ns mp3-update-scanner.core
      (:gen-class)
-     (:use mp3-update-scanner.libscan)
+     (:use mp3-update-scanner.libscan
+           mp3-update-scanner.lastfm)
      (:require [clojure.tools.cli :refer [parse-opts]]
                [clojure.data.json :as json]
                [clojure.java.io :refer [file]]
                [mp3-update-scanner.lastfm :as lastfm]))
 
 (defn save-collection [collection path]
-  (spit path (json/write-str collection)))
+  (spit path (json/write-str collection))
+  collection)
 
 (defn read-collection [path]
   (json/read-str (slurp path)))
@@ -21,16 +23,14 @@
    ["-c" "--cached-path PATH" "Path to collection if you have already scanned library"
     :default nil]
    ["-o" "--output PATH" "Path to output (results of music scan). Should default to path of cached-path or, if not given, to out.json"
-    :default nil]
+    :default "out.json"]
    ["-i" "--ignore-path PATH" "Path to ignore file"
     :default nil]])
 
 (defn parse-prog-options [args]
-  (let [{mpath :music-path
-         cachepath :cached-path
-         output :output
-         ignorepath :ignore-path} (:options (parse-opts args cli-options))]
-    [mpath cachepath (or output cachepath "out.json") ignorepath]))
+  (let [{:keys [music-path cached-path output ignore-path]}
+        (:options (parse-opts args cli-options))]
+    [music-path cached-path output ignore-path]))
 
 (defn validate-args [[mpath cachepath _ _ :as args]]
   (if (not (or mpath cachepath))
@@ -47,14 +47,6 @@
          (only-listened-authors)
          (remove-ignored (when (and ignorepath (.exists (file ignorepath)))
                            (read-collection ignorepath)))
+         (save-collection cachepath)
+         (get-authors-from-lastfm)
          (save-collection outputpath)))))
-
-
-
-
-
-
-
-
-
-

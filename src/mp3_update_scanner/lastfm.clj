@@ -36,9 +36,18 @@
   [author-name]
   (http/get (lastfm-getalbums-url author-name)
             (fn [{:keys [body]}]
+              (println (str "got response for: " author-name))
               (let [decoded-body (json/read-str body)]
                 (when (not (is-error-response decoded-body))
-                   (albums-from-lastfm decoded-body))))))
+                  (println (str "response for " author-name " is actually ok!"))
+                  (albums-from-lastfm decoded-body))))))
+
+(defn get-authors-from-lastfm [collection]
+  (into {} (map (fn [[k _]]
+                  (println (str "looking up: " k))
+                  [k @(get-lastfm-author-info k)]) collection)))
+
+
 
 
 

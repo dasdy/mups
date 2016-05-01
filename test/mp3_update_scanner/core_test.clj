@@ -107,9 +107,10 @@
     (is (= ["music" "cache" "out" "ignore"]
            (parse-prog-options ["--ignore-path=ignore" "--output=out"
                                 "--music-path=music" "--cached-path=cache"])))
-    (is (= ["music" "cache" "cache" "ignore"]
+    (is (= ["music" "cache" "out.json" "ignore"]
            (parse-prog-options ["--ignore-path=ignore"
-                                "--music-path=music" "--cached-path=cache"])))
+                                "--music-path=music"
+                                "--cached-path=cache"])))
     (is (= ["music" nil "out.json" nil]
            (parse-prog-options ["--music-path=music"])))
     (is (validate-args ["music" nil "out.json" nil]))
