@@ -44,4 +44,17 @@
          (build-collection (if (and cachepath (.exists (file cachepath)))
                              (read-collection cachepath)
                              {}))
+         (only-listened-authors)
+         (remove-ignored (when (and ignorepath (.exists (file ignorepath)))
+                           (read-collection ignorepath)))
          (save-collection outputpath)))))
+
+
+
+
+
+
+
+
+
+

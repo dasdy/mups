@@ -43,7 +43,7 @@
 (defn author-is-listened
   "check if user truly listens to this author
    (to filter out those where there is only 1-2 songs)"
-  [author-info]
+  [[_ author-info]]
   (let [total-songs (reduce + (vals author-info))
         album-count (count author-info)]
     (or (> total-songs 5)
@@ -51,9 +51,39 @@
              (every? #(> % 1) (vals author-info))))))
 
 (defn only-listened-authors [collection]
-  (filter author-is-listened collection))
+  (into {} (filter author-is-listened collection)))
 
 (defn find-missing-albums [local-author-info lastfm-author-info ignore-list]
   )
 
+(defn remove-ignored [collection ignore-collection]
+  (when ignore-collection
+    (let [authors (get ignore-collection "authors")
+          albums (get ignore-collection "albums")
+          author_albums (get ignore-collection "author_albums")]
+      (->> authors
+           (apply dissoc collection)
+           (map (fn [[k v]]
+                  (let [removed-globals (apply dissoc v albums)]
+                    {k (apply dissoc removed-globals (get author_albums k))})))
+           (into {})))))
+
 (defn find-all-missing [collection ignore-list])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

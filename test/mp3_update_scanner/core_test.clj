@@ -90,15 +90,17 @@
 
 (deftest author-is-listened-tests
   (testing "is-listened?"
-    (is (author-is-listened {"a" 5 "b" 9}))
-    (is (not (author-is-listened {"a" 5})))
-    (is (author-is-listened {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}))
-    (is (not (author-is-listened {"a" 1 "b" 2 "c" 1}))))
+    (is (author-is-listened ["author" {"a" 5 "b" 9}]))
+    (is (not (author-is-listened ["author" {"a" 5}])))
+    (is (author-is-listened ["author" {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}]))
+    (is (not (author-is-listened ["author" {"a" 1 "b" 2 "c" 1}]))))
   (testing "same thing on a list"
-    (is (= [{"a" 5 "b" 9} {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}]
-           (only-listened-authors [{"a" 5 "b" 9} {"a" 5}
-                                   {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}
-                                   {"a" 1 "b" 2 "c" 1}])))))
+    (is (= {"author1" {"a" 5 "b" 9}
+            "author3" {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}}
+           (only-listened-authors {"author1" {"a" 5 "b" 9}
+                                   "author2" {"a" 5}
+                                   "author3" {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}
+                                   "author4" {"a" 1 "b" 2 "c" 1}})))))
 
 (deftest cli-args-tests
   (testing "cli-args-values"
@@ -113,3 +115,12 @@
     (is (validate-args ["music" nil "out.json" nil]))
     (is (validate-args [nil "cache" nil nil]))
     (is (not (validate-args [nil nil "out.json" "ignore.json"])))))
+
+(deftest ignore-tests
+  (testing "ignore-test"
+    (is (= (remove-ignored {"author" {"album1" 1 "album2" 2 "album3" 3 "album4" 4}
+                            "author2" {"album1" 2 "album4" 5}}
+                           {"authors" ["author2"]
+                            "albums" ["album1" "album3"]
+                            "author_albums" {"author" ["album2"]}})
+           {"author" {"album4" 4}}))))
