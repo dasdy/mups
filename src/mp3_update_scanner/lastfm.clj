@@ -1,7 +1,7 @@
 (ns mp3-update-scanner.lastfm
   (:use clojure.java.io)
   (:require [clojure.string :as str]
-            [clj-http.client :as client]
+            [org.httpkit.client :as http]
             [clojure.data.json :as json]))
 
 
@@ -23,7 +23,11 @@
 
 (defn get-lastfm-author-info [author-name]
   "only for requesting info, returns decoded json from last.fm"
-  (json/read-str (:body (client/get (lastfm-getalbums-url author-name)))))
+  (http/get (lastfm-getalbums-url author-name)
+            (fn [{:keys [body]}]
+              (let [decoded-body (json/read-str body)]
+                (when (not (is-error-response decoded-body))
+                   (albums-from-lastfm decoded-body))))))
 
 (defn is-error-response [body]
   (not (nil? (get body "error"))))
