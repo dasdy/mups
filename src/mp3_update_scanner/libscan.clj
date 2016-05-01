@@ -48,3 +48,11 @@
     (or (> total-songs 5)
         (and (> album-count 1)
              (every? #(> % 1) (vals author-info))))))
+
+(defn only-listened-authors [collection]
+  (filter author-is-listened collection))
+
+(defn find-missing-albums [local-author-info lastfm-author-info ignore-list]
+  )
+
+(defn find-all-missing [collection ignore-list])

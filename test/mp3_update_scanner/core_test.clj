@@ -92,7 +92,12 @@
     (is (author-is-listened {"a" 5 "b" 9}))
     (is (not (author-is-listened {"a" 5})))
     (is (author-is-listened {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}))
-    (is (not (author-is-listened {"a" 1 "b" 2 "c" 1})))))
+    (is (not (author-is-listened {"a" 1 "b" 2 "c" 1}))))
+  (testing "same thing on a list"
+    (is (= [{"a" 5 "b" 9} {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}]
+           (only-listened-authors [{"a" 5 "b" 9} {"a" 5}
+                                   {"a" 1 "b" 1 "c" 1 "d" 1 "e" 1 "f" 2}
+                                   {"a" 1 "b" 2 "c" 1}])))))
 
 (deftest cli-args-tests
   (testing "cli-args-values"
