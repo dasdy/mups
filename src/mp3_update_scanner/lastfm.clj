@@ -21,14 +21,6 @@
        "&api_key=" (java.net.URLEncoder/encode api-key)
        "&format=json"))
 
-(defn get-lastfm-author-info [author-name]
-  "only for requesting info, returns decoded json from last.fm"
-  (http/get (lastfm-getalbums-url author-name)
-            (fn [{:keys [body]}]
-              (let [decoded-body (json/read-str body)]
-                (when (not (is-error-response decoded-body))
-                   (albums-from-lastfm decoded-body))))))
-
 (defn is-error-response [body]
   (not (nil? (get body "error"))))
 
@@ -37,6 +29,14 @@
   (reduce (fn [acc x] (assoc acc (get x "name") 1))
           {}
           (get (get lastfm-response "topalbums") "album")))
+
+(defn get-lastfm-author-info [author-name]
+  "only for requesting info, returns decoded json from last.fm"
+  (http/get (lastfm-getalbums-url author-name)
+            (fn [{:keys [body]}]
+              (let [decoded-body (json/read-str body)]
+                (when (not (is-error-response decoded-body))
+                   (albums-from-lastfm decoded-body))))))
 
 
 
