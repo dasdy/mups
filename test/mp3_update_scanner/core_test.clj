@@ -1,7 +1,8 @@
 (ns mp3-update-scanner.core-test
   (:require [clojure.test :refer :all]
             [mp3-update-scanner.core :refer :all]
-            [mp3-update-scanner.libscan :refer :all]))
+            [mp3-update-scanner.libscan :refer :all]
+            [mp3-update-scanner.lastfm :refer :all]))
 
 (deftest add-author-info-tests
   (testing "add-author to existing authors"
@@ -125,3 +126,41 @@
                             "albums" ["album1" "album3"]
                             "author_albums" {"author" ["album2"]}})
            {"author" {"album4" 4}}))))
+
+(deftest serialization-tests
+  (testing "save-collection"
+    (with-local-vars [ file-buf nil]
+      (with-redefs [spit (fn [path str] (var-set file-buf str))]
+        (do (save-collection {"a" {"b" 1}} "some-path")
+            (is (= @file-buf "{\"a\":{\"b\":1}}"))))))
+  (testing "read-collection"
+    (with-redefs [slurp (fn [_] "{\"a\":{\"b\":1}}")]
+      (is (= (read-collection "a.json")
+             {"a" {"b" 1}})))))
+
+(deftest get-author-from-lastfm-tests
+  (testing "request-test")
+  (testing "url test"
+    (is (re-seq
+         #"http://[a-zA-Z.0-9/]+\?method=artist\.gettopalbums&artist=ArtistName&api_key=[a-zA-Z0-9]+&format=json"
+         (lastfm-getalbums-url "ArtistName"))))
+  (testing "get-authors-from-collection"
+    (with-redefs [get-lastfm-author-info
+                  (fn [name] (atom {"album" 1 "album2" 1 "album3" 1}))]
+     (is (= {"author1" {"album" 1 "album2" 1 "album3" 1}
+             "author2" {"album" 1 "album2" 1 "album3" 1}
+             "author3" {"album" 1 "album2" 1 "album3" 1}}
+            (get-authors-from-lastfm {"author1" {"album" 12}
+                                      "author2" {"album2" 3}
+                                      "author3" {"album3" 5}})))))
+  (testing "response -> album-info"
+    (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "album1"}
+                                                      {"name" "album2"}]}})
+           {"album1" 1 "album2" 1})))
+  (testing "is-error-response"
+    (is (is-error-response {"error" 15 "message" "some error message"}))
+    (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}
+                                                       {"name" "album2"}]}})))))
+
+
+
