@@ -1,6 +1,8 @@
 (ns mp3-update-scanner.libscan
   (:require claudio.id3
-            [clojure.java.io :refer [file]]))
+            [clojure.java.io :refer [file]]
+            [mp3-update-scanner.lastfm :refer :all]
+            [clojure.data :refer [diff]]))
 
 
 "structure:
@@ -53,8 +55,10 @@
 (defn only-listened-authors [collection]
   (into {} (filter author-is-listened collection)))
 
-(defn find-missing-albums [local-author-info lastfm-author-info ignore-list]
-  )
+(defn find-missing-albums [local-author-info lastfm-author-info]
+  (let [[_ missing common] (diff (into #{} (keys local-author-info))
+                                 (into #{} (keys lastfm-author-info)))]
+   (reduce (fn [acc x] (assoc acc x 1)) {} missing)))
 
 (defn remove-ignored [collection ignore-collection]
   (when ignore-collection
@@ -68,22 +72,9 @@
                     {k (apply dissoc removed-globals (get author_albums k))})))
            (into {})))))
 
-(defn find-all-missing [collection ignore-list])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(defn find-all-missing [collection]
+  (let [lastfm-looked-up (get-authors-from-lastfm collection)]
+    (map (fn [[k1 v1]]
+           (let [v2 (get lastfm-looked-up k1)]
+            [k1 (find-missing-albums v1 v2)]))
+         collection lastfm-looked-up)))

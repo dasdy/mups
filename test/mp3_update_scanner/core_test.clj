@@ -127,6 +127,11 @@
                             "author_albums" {"author" ["album2"]}})
            {"author" {"album4" 4}}))))
 
+(deftest diff-tests
+  (testing "find missing albums in one author"
+    (is (= (find-missing-albums {"a" 15 "b" 15} {"a" 1 "b" 1 "c" 1})
+           {"c" 1}))))
+
 (deftest serialization-tests
   (testing "save-collection"
     (with-local-vars [ file-buf nil]

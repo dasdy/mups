@@ -46,15 +46,3 @@
   (into {} (map (fn [[k _]]
                   (println (str "looking up: " k))
                   [k @(get-lastfm-author-info k)]) collection)))
-
-
-
-
-
-
-
-
-
-
-
-
