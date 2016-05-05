@@ -61,7 +61,7 @@
    (reduce (fn [acc x] (assoc acc x 1)) {} missing)))
 
 (defn remove-ignored [collection ignore-collection]
-  (when ignore-collection
+  (if ignore-collection
     (let [authors (get ignore-collection "authors")
           albums (get ignore-collection "albums")
           author_albums (get ignore-collection "author_albums")]
@@ -70,7 +70,8 @@
            (map (fn [[k v]]
                   (let [removed-globals (apply dissoc v albums)]
                     {k (apply dissoc removed-globals (get author_albums k))})))
-           (into {})))))
+           (into {})))
+    collection))
 
 (defn find-all-missing [collection]
   (let [lastfm-looked-up (get-authors-from-lastfm collection)]

@@ -8,7 +8,10 @@
                [mp3-update-scanner.lastfm :as lastfm]))
 
 (defn save-collection [collection path]
-  (spit path (json/write-str collection))
+  (spit path (json/write-str
+              (into (sorted-map)
+                    (map (fn [[k v]] [k (sort (keys v))])
+                         collection))))
   collection)
 
 (defn read-collection [path]
@@ -38,15 +41,17 @@
     true))
 
 (defn -main [& args]
-  (let [[mpath cachepath outputpath ignorepath :as parsed-args] (parse-prog-options args)]
+  (let [[mpath cachepath outputpath ignorepath :as parsed-args] (parse-prog-options args)
+        ignored-stuff (when (and ignorepath (.exists (file ignorepath)))
+                           (read-collection ignorepath))]
    (when (validate-args parsed-args)
      (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
          (build-collection (if (and cachepath (.exists (file cachepath)))
                              (read-collection cachepath)
                              {}))
          (only-listened-authors)
-         (remove-ignored (when (and ignorepath (.exists (file ignorepath)))
-                           (read-collection ignorepath)))
+         (remove-ignored ignored-stuff)
          (save-collection cachepath)
          (get-authors-from-lastfm)
+         (remove-ignored ignored-stuff)
          (save-collection outputpath)))))

@@ -38,7 +38,7 @@
 (defn album-song-count [author-name album-name]
   (http/get (lastfm-get-detailed-album author-name album-name)
             (fn [{:keys [body]}]
-              (println (str "got response for: " author-name ": " album-name))
+              (print (str "got response for: " author-name ": " album-name))
               (let [decoded-body (json/read-str body)]
                 (when (not (is-error-response decoded-body))
                   (-> decoded-body
@@ -59,9 +59,12 @@
                                 (get "artist")
                                 (get "name"))
                 song-count @(album-song-count author-name album-name)]
+            (println (str "(" song-count ")"))
             (assoc acc album-name song-count)))
         {})
-       (filter (fn [[_ v]] (> v 0)))
+       (filter (fn [[_ v]] (> v 1 ; to cut out singles
+                               ; 0
+                             )))
        (into {})))
 
 (defn get-lastfm-author-info
@@ -72,7 +75,6 @@
               (println (str "got response for: " author-name))
               (let [decoded-body (json/read-str body)]
                 (when (not (is-error-response decoded-body))
-                  (println (str "response for " author-name " is actually ok!"))
                   (albums-from-lastfm decoded-body))))))
 
 (defn get-authors-from-lastfm [collection]

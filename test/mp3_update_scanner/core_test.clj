@@ -137,11 +137,11 @@
     (with-local-vars [ file-buf nil]
       (with-redefs [spit (fn [path str] (var-set file-buf str))]
         (do (save-collection {"a" {"b" 1}} "some-path")
-            (is (= @file-buf "{\"a\":{\"b\":1}}"))))))
+            (is (= @file-buf "{\"a\":[\"b\"]}"))))))
   (testing "read-collection"
-    (with-redefs [slurp (fn [_] "{\"a\":{\"b\":1}}")]
+    (with-redefs [slurp (fn [_] "{\"a\":[\"b\"]}")]
       (is (= (read-collection "a.json")
-             {"a" {"b" 1}})))))
+             {"a" ["b"]})))))
 
 (deftest get-author-from-lastfm-tests
   (testing "request-test")
@@ -159,12 +159,12 @@
                                       "author2" {"album2" 3}
                                       "author3" {"album3" 5}})))))
   (testing "response -> album-info"
-    (with-redefs [album-song-count (constantly (atom 1))]
+    (with-redefs [album-song-count (constantly (atom 2))]
      (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "album1"
                                                         "artist" {"name" "artist1"}}
                                                        {"name" "album2"
                                                         "artist" {"name" "artist1"}}]}})
-            {"album1" 1 "album2" 1}))))
+            {"album1" 2 "album2" 2}))))
   (testing "is-error-response"
     (is (is-error-response {"error" 15 "message" "some error message"}))
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}
