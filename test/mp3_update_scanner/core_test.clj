@@ -159,9 +159,12 @@
                                       "author2" {"album2" 3}
                                       "author3" {"album3" 5}})))))
   (testing "response -> album-info"
-    (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "album1"}
-                                                      {"name" "album2"}]}})
-           {"album1" 1 "album2" 1})))
+    (with-redefs [album-song-count (constantly (atom 1))]
+     (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "album1"
+                                                        "artist" {"name" "artist1"}}
+                                                       {"name" "album2"
+                                                        "artist" {"name" "artist1"}}]}})
+            {"album1" 1 "album2" 1}))))
   (testing "is-error-response"
     (is (is-error-response {"error" 15 "message" "some error message"}))
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}
