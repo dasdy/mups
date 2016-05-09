@@ -105,18 +105,19 @@
 
 (deftest cli-args-tests
   (testing "cli-args-values"
-    (is (= ["music" "cache" "out" "ignore"]
+    (is (= ["music" "cache" "out" "ignore" "lastfm"]
            (parse-prog-options ["--ignore-path=ignore" "--output=out"
-                                "--music-path=music" "--cached-path=cache"])))
-    (is (= ["music" "cache" "out.json" "ignore"]
+                                "--music-path=music" "--cached-path=cache"
+                                "--lastfm=lastfm"])))
+    (is (= ["music" "cache" "diff.json" "ignore" "lastfm.json"]
            (parse-prog-options ["--ignore-path=ignore"
                                 "--music-path=music"
                                 "--cached-path=cache"])))
-    (is (= ["music" nil "out.json" nil]
+    (is (= ["music" nil "diff.json" nil "lastfm.json"]
            (parse-prog-options ["--music-path=music"])))
-    (is (validate-args ["music" nil "out.json" nil]))
-    (is (validate-args [nil "cache" nil nil]))
-    (is (not (validate-args [nil nil "out.json" "ignore.json"])))))
+    (is (validate-args ["music" nil "diff.json" nil nil]))
+    (is (validate-args [nil "cache" nil nil nil]))
+    (is (not (validate-args [nil nil "diff.json" "ignore.json" nil])))))
 
 (deftest ignore-tests
   (testing "ignore-test"
@@ -125,12 +126,16 @@
                            {"authors" ["author2"]
                             "albums" ["album1" "album3"]
                             "author_albums" {"author" ["album2"]}})
-           {"author" {"album4" 4}}))))
+           {"author" {"album4" 4}}))
+    (is (= (remove-singles {"author" {"s" 1 "s3" 2}
+                            "author2" {"x" 2 "k" 1}})
+           {"author" {"s3" 2}
+            "author2" {"x" 2}}))))
 
 (deftest diff-tests
   (testing "find missing albums in one author"
-    (is (= (find-missing-albums {"a" 15 "b" 15} {"a" 1 "b" 1 "c" 1})
-           {"c" 1}))))
+    (is (= (find-author-missing-albums {"a" 15 "b" 15} {"a" 1 "b" 1 "c" 1})
+           {"you have" {}, "you miss" #{"c"}, "both have" #{"a" "b"}}))))
 
 (deftest serialization-tests
   (testing "save-collection"
@@ -150,8 +155,12 @@
          #"http://[a-zA-Z.0-9/]+\?method=artist\.gettopalbums&artist=ArtistName&api_key=[a-zA-Z0-9]+&format=json"
          (lastfm-getalbums-url "ArtistName"))))
   (testing "get-authors-from-collection"
-    (with-redefs [get-lastfm-author-info
-                  (fn [name] (atom {"album" 1 "album2" 1 "album3" 1}))]
+    (with-redefs [concur-get
+                  (fn [urls]
+                    (repeat (count urls)
+                            {:body "dummy_response_body"}))
+                  author-response->author-info
+                  (fn [body] {"album" 1 "album2" 1 "album3" 1})]
      (is (= {"author1" {"album" 1 "album2" 1 "album3" 1}
              "author2" {"album" 1 "album2" 1 "album3" 1}
              "author3" {"album" 1 "album2" 1 "album3" 1}}
@@ -159,12 +168,11 @@
                                       "author2" {"album2" 3}
                                       "author3" {"album3" 5}})))))
   (testing "response -> album-info"
-    (with-redefs [album-song-count (constantly (atom 2))]
-     (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "album1"
-                                                        "artist" {"name" "artist1"}}
-                                                       {"name" "album2"
-                                                        "artist" {"name" "artist1"}}]}})
-            {"album1" 2 "album2" 2}))))
+    (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "album1"
+                                                       "artist" {"name" "artist1"}}
+                                                      {"name" "album2"
+                                                       "artist" {"name" "artist1"}}]}})
+           {"album1" 1 "album2" 1})))
   (testing "is-error-response"
     (is (is-error-response {"error" 15 "message" "some error message"}))
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}

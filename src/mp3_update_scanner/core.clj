@@ -14,6 +14,12 @@
                          collection))))
   collection)
 
+(defn save-diff [diff path]
+  (spit path (json/write-str
+              (into (sorted-map)
+                    (map (fn [[k v]] [k (sort v)])
+                         diff)))))
+
 (defn read-collection [path]
   (json/read-str (slurp path)))
 
@@ -26,32 +32,39 @@
    ["-c" "--cached-path PATH" "Path to collection if you have already scanned library"
     :default nil]
    ["-o" "--output PATH" "Path to output (results of music scan). Should default to path of cached-path or, if not given, to out.json"
-    :default "out.json"]
+    :default "diff.json"]
+   ["-l" "--lastfm PATH" "Path to Last.fm version of your  library (not removing albums you already have"
+    :default "lastfm.json"]
    ["-i" "--ignore-path PATH" "Path to ignore file"
     :default nil]])
 
 (defn parse-prog-options [args]
-  (let [{:keys [music-path cached-path output ignore-path]}
+  (let [{:keys [music-path cached-path output lastfm ignore-path]}
         (:options (parse-opts args cli-options))]
-    [music-path cached-path output ignore-path]))
+    [music-path cached-path output ignore-path lastfm]))
 
-(defn validate-args [[mpath cachepath _ _ :as args]]
+(defn validate-args [[mpath cachepath _ _ _ :as args]]
   (if (not (or mpath cachepath))
     (println (str "You must specify at least one of --music-path or --cached-path options"))
     true))
 
 (defn -main [& args]
-  (let [[mpath cachepath outputpath ignorepath :as parsed-args] (parse-prog-options args)
+  (let [[mpath cachepath outputpath ignorepath lastfmpath :as parsed-args] (parse-prog-options args)
         ignored-stuff (when (and ignorepath (.exists (file ignorepath)))
                            (read-collection ignorepath))]
-   (when (validate-args parsed-args)
-     (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
-         (build-collection (if (and cachepath (.exists (file cachepath)))
-                             (read-collection cachepath)
-                             {}))
-         (only-listened-authors)
-         (remove-ignored ignored-stuff)
-         (save-collection cachepath)
-         (get-authors-from-lastfm)
-         (remove-ignored ignored-stuff)
-         (save-collection outputpath)))))
+    (when (validate-args parsed-args)
+      (let [user-collection (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
+                                (build-collection (if (and cachepath (.exists (file cachepath)))
+                                                    (read-collection cachepath)
+                                                    {}))
+                                (only-listened-authors)
+                                (remove-ignored ignored-stuff)
+                                (save-collection cachepath))]
+       (-> user-collection
+           (get-authors-from-lastfm)
+           (remove-ignored ignored-stuff)
+           (update-song-counts)
+           (remove-singles)
+           (save-collection lastfmpath)
+           (diff-collections user-collection)
+           (save-diff outputpath))))))

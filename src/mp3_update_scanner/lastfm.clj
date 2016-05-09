@@ -5,6 +5,10 @@
             [clojure.data.json :as json]))
 
 
+(defn concur-get [urls]
+  (let [qs (doall (map http/get urls))
+        bodies (map (fn [resp] (:body @resp)) qs)]
+    bodies))
 
 (def api-key (let [res (io/resource "api-key")]
                (if (and res (.exists res)) (slurp res)
@@ -47,6 +51,30 @@
                       (get "track")
                       (count)))))))
 
+
+(defn album-response->song-count
+  [body]
+  (let [decoded-body (json/read-str body)]
+    (when (not (is-error-response decoded-body))
+      (-> decoded-body
+          (get "album")
+          (get "tracks")
+          (get "track")
+                      (count)))))
+
+(defn update-song-counts [collection]
+  (into {}
+        (map (fn [[author albums]]
+               (let [albums (keys albums)
+                     urls (map #(lastfm-get-detailed-album author %)
+                               albums)
+                     bodies (concur-get urls)]
+                 (println "updating counts for author: " author)
+                 [author (into {}
+                               (map (fn [album body] [album (album-response->song-count body)])
+                                    albums bodies))]))
+             collection)))
+
 (defn albums-from-lastfm
   "transforming last.fm response into appropriate form"
   [lastfm-response]
@@ -54,18 +82,22 @@
        (reduce
         (fn [acc x]
           (let [album-name (get x "name")
-                author-name (-> x  ;; sometimes author name != the one that was requested,
-                                   ;;lastfm corrects it and some shit
-                                (get "artist")
-                                (get "name"))
-                song-count @(album-song-count author-name album-name)]
-            (println (str "(" song-count ")"))
+                author-name ;; sometimes author name != the one that was requested,
+                            ;; lastfm corrects it and some shit
+                (-> x
+                    (get "artist")
+                    (get "name"))
+                song-count 1] ;; this will be updated in the next step,
+            ;; for now this is 1 to make less requests
             (assoc acc album-name song-count)))
-        {})
-       (filter (fn [[_ v]] (> v 1 ; to cut out singles
-                               ; 0
-                             )))
-       (into {})))
+        {})))
+
+(defn remove-singles [collection]
+  (into {}
+        (map (fn [[author albums]]
+               [author (into {} (filter (fn [[_ v]] (> v 1))
+                                        albums))])
+             collection)))
 
 (defn get-lastfm-author-info
   "only for requesting info, returns decoded json from last.fm"
@@ -77,7 +109,26 @@
                 (when (not (is-error-response decoded-body))
                   (albums-from-lastfm decoded-body))))))
 
+(defn author-response->author-info
+  [body]
+  (let [decoded-body (json/read-str body)]
+    (when (not (is-error-response decoded-body))
+      (albums-from-lastfm decoded-body))))
+
 (defn get-authors-from-lastfm [collection]
-  (into {} (map (fn [[k _]]
-                  (println (str "looking up: " k))
-                  [k @(get-lastfm-author-info k)]) collection)))
+  (let [authors (keys collection)
+        urls (map lastfm-getalbums-url authors)
+        bodies (concur-get urls)]
+    (into {} (map (fn [author body]
+                    [author (author-response->author-info body)])
+                  authors bodies))))
+
+
+
+
+
+
+
+
+
+

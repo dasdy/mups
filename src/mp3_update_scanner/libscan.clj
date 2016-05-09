@@ -55,10 +55,21 @@
 (defn only-listened-authors [collection]
   (into {} (filter author-is-listened collection)))
 
-(defn find-missing-albums [local-author-info lastfm-author-info]
-  (let [[_ missing common] (diff (into #{} (keys local-author-info))
-                                 (into #{} (keys lastfm-author-info)))]
-   (reduce (fn [acc x] (assoc acc x 1)) {} missing)))
+(defn find-author-missing-albums [local-author-info lastfm-author-info]
+  (let [[user-added missing common] (diff (into #{} (keys local-author-info))
+                                          (into #{} (keys lastfm-author-info)))]
+    {"you have" (or user-added {})
+     "you miss" (or missing {})
+     "both have" (or common {})}))
+
+(defn diff-collections [lastfm-collection user-collection]
+  (into {} (map (fn [author]
+                  (let [local-author-info (get user-collection author)
+                        lastfm-author-info (get lastfm-collection author)]
+                   [author (find-author-missing-albums
+                            local-author-info
+                            lastfm-author-info)]))
+                (keys user-collection))))
 
 (defn remove-ignored [collection ignore-collection]
   (if ignore-collection
@@ -72,10 +83,3 @@
                     {k (apply dissoc removed-globals (get author_albums k))})))
            (into {})))
     collection))
-
-(defn find-all-missing [collection]
-  (let [lastfm-looked-up (get-authors-from-lastfm collection)]
-    (map (fn [[k1 v1]]
-           (let [v2 (get lastfm-looked-up k1)]
-            [k1 (find-missing-albums v1 v2)]))
-         collection lastfm-looked-up)))
