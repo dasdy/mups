@@ -66,9 +66,9 @@
   (into {} (map (fn [author]
                   (let [local-author-info (get user-collection author)
                         lastfm-author-info (get lastfm-collection author)]
-                   [author (find-author-missing-albums
-                            local-author-info
-                            lastfm-author-info)]))
+                    [author (find-author-missing-albums
+                             local-author-info
+                             lastfm-author-info)]))
                 (keys user-collection))))
 
 (defn remove-ignored [collection ignore-collection]

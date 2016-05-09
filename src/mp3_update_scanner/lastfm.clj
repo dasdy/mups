@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [org.httpkit.client :as http]
             [clojure.java.io :as io]
-            [clojure.data.json :as json]))
+            [cheshire.core :as json]))
 
 
 (defn concur-get [urls]
@@ -43,7 +43,7 @@
   (http/get (lastfm-get-detailed-album author-name album-name)
             (fn [{:keys [body]}]
               (print (str "got response for: " author-name ": " album-name))
-              (let [decoded-body (json/read-str body)]
+              (let [decoded-body (json/parse-string body)]
                 (when (not (is-error-response decoded-body))
                   (-> decoded-body
                       (get "album")
@@ -54,7 +54,7 @@
 
 (defn album-response->song-count
   [body]
-  (let [decoded-body (json/read-str body)]
+  (let [decoded-body (json/parse-string body)]
     (when (not (is-error-response decoded-body))
       (-> decoded-body
           (get "album")
@@ -105,13 +105,13 @@
   (http/get (lastfm-getalbums-url author-name)
             (fn [{:keys [body]}]
               (println (str "got response for: " author-name))
-              (let [decoded-body (json/read-str body)]
+              (let [decoded-body (json/parse-string body)]
                 (when (not (is-error-response decoded-body))
                   (albums-from-lastfm decoded-body))))))
 
 (defn author-response->author-info
   [body]
-  (let [decoded-body (json/read-str body)]
+  (let [decoded-body (json/parse-string body)]
     (when (not (is-error-response decoded-body))
       (albums-from-lastfm decoded-body))))
 

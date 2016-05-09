@@ -3,25 +3,37 @@
      (:use mp3-update-scanner.libscan
            mp3-update-scanner.lastfm)
      (:require [clojure.tools.cli :refer [parse-opts]]
-               [clojure.data.json :as json]
+               [cheshire.core :refer :all]
                [clojure.java.io :refer [file]]
                [mp3-update-scanner.lastfm :as lastfm]))
 
 (defn save-collection [collection path]
-  (spit path (json/write-str
-              (into (sorted-map)
-                    (map (fn [[k v]] [k (sort (keys v))])
-                         collection))))
+  (let [my-pretty-printer (create-pretty-printer
+                           (assoc default-pretty-print-options
+                                  :indent-arrays? true))]
+   (spit path (generate-string
+               (into (sorted-map)
+                     (map (fn [[k v]] [k (sort (keys v))])
+                          collection))
+               {:pretty my-pretty-printer})))
   collection)
 
 (defn save-diff [diff path]
-  (spit path (json/write-str
-              (into (sorted-map)
-                    (map (fn [[k v]] [k (sort v)])
-                         diff)))))
+  (let [my-pretty-printer (create-pretty-printer
+                          (assoc default-pretty-print-options
+                                 :indent-arrays? true))]
+   (spit path
+         (generate-string
+          (into (sorted-map)
+                (map (fn [[k v]]
+                       [k (into (sorted-map)
+                                (map (fn [[k v]] [k (sort v)])
+                                     v))])
+                     diff))
+          {:pretty my-pretty-printer}))))
 
 (defn read-collection [path]
-  (json/read-str (slurp path)))
+  (parse-string (slurp path)))
 
 (defn remove-trailing-0 [string]
   (apply str (remove #(= (int %) 0) string)))
@@ -48,23 +60,32 @@
     (println (str "You must specify at least one of --music-path or --cached-path options"))
     true))
 
-(defn -main [& args]
-  (let [[mpath cachepath outputpath ignorepath lastfmpath :as parsed-args] (parse-prog-options args)
-        ignored-stuff (when (and ignorepath (.exists (file ignorepath)))
-                           (read-collection ignorepath))]
-    (when (validate-args parsed-args)
-      (let [user-collection (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
-                                (build-collection (if (and cachepath (.exists (file cachepath)))
-                                                    (read-collection cachepath)
-                                                    {}))
-                                (only-listened-authors)
-                                (remove-ignored ignored-stuff)
-                                (save-collection cachepath))]
-       (-> user-collection
+(defn build-user-collection
+  [mpath cachepath ignored-stuff]
+  (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
+      (build-collection (if (and cachepath (.exists (file cachepath)))
+                          (read-collection cachepath)
+                          {}))
+      (only-listened-authors)
+      (remove-ignored ignored-stuff)
+      (save-collection cachepath)))
+
+(defn build-diff
+  [user-collection ignored-stuff lastfmpath outputpath]
+  (-> user-collection
            (get-authors-from-lastfm)
            (remove-ignored ignored-stuff)
            (update-song-counts)
            (remove-singles)
            (save-collection lastfmpath)
            (diff-collections user-collection)
-           (save-diff outputpath))))))
+           (save-diff outputpath)))
+
+(defn -main [& args]
+  (let [[mpath cachepath outputpath ignorepath lastfmpath :as parsed-args]
+        (parse-prog-options args)
+        ignored-stuff (when (and ignorepath (.exists (file ignorepath)))
+                           (read-collection ignorepath))]
+    (when (validate-args parsed-args)
+      (let [user-collection (build-user-collection mpath cachepath ignored-stuff)]
+       (build-diff user-collection ignored-stuff lastfmpath outputpath)))))
