@@ -4,9 +4,12 @@
             [clojure.java.io :as io]
             [cheshire.core :as json]))
 
+(def http-client-parameters
+  {:user-agent "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0"})
 
 (defn concur-get [urls]
-  (let [qs (doall (map http/get urls))
+  (let [qs (doall (map #(http/get % http-client-parameters)
+                       urls))
         bodies (map (fn [resp] (:body @resp)) qs)]
     bodies))
 
