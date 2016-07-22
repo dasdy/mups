@@ -63,7 +63,7 @@
           (get "album")
           (get "tracks")
           (get "track")
-                      (count)))))
+          (count)))))
 
 (defn update-song-counts [collection]
   (into {}
@@ -84,12 +84,12 @@
   (->> (get (get lastfm-response "topalbums") "album")
        (reduce
         (fn [acc x]
-          (let [album-name (get x "name")
+          (let [album-name (.toLowerCase (get x "name"))
                 author-name ;; sometimes author name != the one that was requested,
                             ;; lastfm corrects it and some shit
-                (-> x
-                    (get "artist")
-                    (get "name"))
+                (.toLowerCase (-> x
+                                  (get "artist")
+                                  (get "name")))
                 song-count 1] ;; this will be updated in the next step,
             ;; for now this is 1 to make less requests
             (assoc acc album-name song-count)))
@@ -98,7 +98,10 @@
 (defn remove-singles [collection]
   (into {}
         (map (fn [[author albums]]
-               [author (into {} (filter (fn [[_ v]] (and v (> v 1)))
+               [author (into {} (filter (fn [[album song-count]]
+                                          (and song-count
+                                               (or (> song-count 1)
+                                                   (re-find #"^.*?(single|\[single\]|\(single\))$" album))))
                                         albums))])
              collection)))
 

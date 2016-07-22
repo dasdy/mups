@@ -14,8 +14,8 @@
 }"
 
 (defn add-author-info [mp3-tags collection]
-  (let [artist-name (get mp3-tags :artist "Unknown Artist")
-        album-name (get mp3-tags :album "Unknown Album")
+  (let [artist-name (.toLowerCase (get mp3-tags :artist "Unknown Artist"))
+        album-name (.toLowerCase (get mp3-tags :album "Unknown Album"))
         artist-info (get collection artist-name {})]
     (assoc collection artist-name
            (update-in artist-info [album-name] #(if % (inc %) 1)))))
