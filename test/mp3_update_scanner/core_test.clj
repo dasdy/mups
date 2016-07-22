@@ -130,6 +130,10 @@
     (is (= (remove-singles {"author" {"s" 1 "s3" 2}
                             "author2" {"x" 2 "k" 1}})
            {"author" {"s3" 2}
+            "author2" {"x" 2}}))
+    (is (= (remove-singles {"author" {"s" 1 "s3" nil}
+                            "author2" {"x" 2 "k" 1}})
+           {"author" {}
             "author2" {"x" 2}}))))
 
 (deftest diff-tests

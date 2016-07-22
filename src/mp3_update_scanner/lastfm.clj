@@ -98,7 +98,7 @@
 (defn remove-singles [collection]
   (into {}
         (map (fn [[author albums]]
-               [author (into {} (filter (fn [[_ v]] (> v 1))
+               [author (into {} (filter (fn [[_ v]] (and v (> v 1)))
                                         albums))])
              collection)))
 
