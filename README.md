@@ -21,23 +21,32 @@ Example : `java -jar mp3-update-scanner --music-path=/home/user/Music --cached-p
 ### Clojure repl
 Since it is written in clojure, you get the chance to hack around as you wish. Functions that might interest you are:
 
- 1. `(build-user-collection mpath cachepath ignored-stuff)` - only scan your library, without any looking-up from the web. Parameters :
+ 1. ```clojure
+    (build-user-collection mpath cachepath ignored-stuff)
+    ``` - only scan your library, without any looking-up from the web. Parameters :
       * `mpath` - path to your music library
       * `cachepath` - path to resulting cache file (if it already exists, result of this scan will be merged into cache file)
       * `ignored-stuff` - clojure representation of content of ignore-file
 
-   Example: `(build-user-collection "/home/user/Music" "/home/user/Music/lib-cache.json" nil)`
+   Example: ```clojure
+            (build-user-collection "/home/user/Music" "/home/user/Music/lib-cache.json" nil)```
 
- 2. `(build-diff user-collection ignored-stuff lastfmpath outputpath)` - build difference between user-collection and whatever will be looked up in last.fm . Parameters:
+ 2. ```clojure
+    (build-diff user-collection ignored-stuff lastfmpath outputpath)
+    ``` - build difference between user-collection and whatever will be looked up in last.fm . Parameters:
    * `user-collection` result of call of `build-user-collection`
    * `ignored-stuff` - clojure representation of content of ignore-file
    * `lastfmpath` - path to result of lookup of your library in last.fm
    * `outputpath` - path to save diff results
 
- 3. `(author-is-listened [[author-name author-info]])` a function used by `build-user-collection` to detect whether you really listen to this author or are your just randomly have this 1 song 
+ 3. ```clojure
+     (author-is-listened [[author-name author-info]])
+    ``` a function used by `build-user-collection` to detect whether you really listen to this author or are your just randomly have this 1 song 
 of his. You might hack around to get different results if my filter doesn't work for you.
 
- 4. `(remove-singles [collection])` - similar to previous function, but goes over last.fm results to skip albums you might not need.
+ 4. ```clojure
+      (remove-singles [collection])
+    ``` - similar to previous function, but goes over last.fm results to skip albums you might not need.
 
 
 ### File formats:
@@ -54,7 +63,7 @@ of his. You might hack around to get different results if my filter doesn't work
 
 3. Diff file - a json map of format:
 ```JSON
-{ author : { "you have": ["album name"], 
+{ "author" : { "you have": ["album name"], 
                 "you miss" : ["album name"], 
                 "both have": ["album name"]
                }
