@@ -1,8 +1,8 @@
-(ns mp3-update-scanner.core-test
+(ns mups.core-test
   (:require [clojure.test :refer :all]
-            [mp3-update-scanner.core :refer :all]
-            [mp3-update-scanner.libscan :refer :all]
-            [mp3-update-scanner.lastfm :refer :all]))
+            [mups.core :refer :all]
+            [mups.libscan :refer :all]
+            [mups.lastfm :refer :all]))
 
 (deftest add-author-info-tests
   (testing "add-author to existing authors"

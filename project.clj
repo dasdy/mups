@@ -1,6 +1,6 @@
-(defproject mp3-update-scanner "0.1.0-SNAPSHOT"
+(defproject mups "0.1.0-SNAPSHOT"
   :description "scan your media library; find if there are new albums by the artists you listen to"
-  :url "https://github.com/dasdy/mp3-update-scanner"
+  :url "https://github.com/dasdy/mups"
   :license {:name "MIT License"
             :url "https://mit-license.org/"}
   :dependencies [[org.clojure/clojure "1.8.0"]
@@ -15,7 +15,7 @@
                  [prone "1.1.4"]
                  [swiss-arrows "1.0.0"]
                  [hiccup "1.0.5"]]
-  :main ^:skip-aot mp3-update-scanner.core
+  :main ^:skip-aot mups.core
   :target-path "target/%s"
   :resource-paths ["resources"]
   :profiles {:uberjar {:aot :all

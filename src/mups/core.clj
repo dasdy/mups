@@ -1,13 +1,13 @@
-(ns mp3-update-scanner.core
+(ns mups.core
      (:gen-class)
-     (:use mp3-update-scanner.libscan
-           mp3-update-scanner.lastfm)
+     (:use mups.libscan
+           mups.lastfm)
      (:require [clojure.tools.cli :refer [parse-opts]]
                [cheshire.core :refer :all]
                [clojure.java.io :refer [file]]
                [hiccup.core :refer [html]]
                [swiss.arrows :refer [-<>]]
-               [mp3-update-scanner.lastfm :as lastfm]))
+               [mups.lastfm :as lastfm]))
 
 (def collection-writer :json)
 (def collection-reader :json)

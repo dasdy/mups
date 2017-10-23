@@ -1,4 +1,4 @@
-(ns mp3-update-scanner.lastfm
+(ns mups.lastfm
   (:require [clojure.string :as str]
             [org.httpkit.client :as http]
             [clojure.java.io :as io]

@@ -1,7 +1,7 @@
-(ns mp3-update-scanner.libscan
+(ns mups.libscan
   (:require claudio.id3
             [clojure.java.io :refer [file]]
-            [mp3-update-scanner.lastfm :refer :all]
+            [mups.lastfm :refer :all]
             [clojure.data :refer [diff]]))
 
 
