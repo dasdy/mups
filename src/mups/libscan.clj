@@ -7,9 +7,12 @@
 
 "structure:
 {
- author_name:
-  {
-     album_name: song_count
+ author_name: {
+     album_name: {
+       song_count
+       title?
+       year?
+   }
   }
 }"
 
@@ -18,10 +21,16 @@
         album-name (.toLowerCase (get mp3-tags :album "Unknown Album"))
         artist-info (get collection artist-name {})]
     (assoc collection artist-name
-           (update-in artist-info [album-name] #(if % (inc %) 1)))))
+           (update-in artist-info [album-name]
+                    #(if % (update-in % [song-count-key] inc)
+                          {song-count-key 1})))))
 
-(defn author-song-count [collection author-name]
-  (reduce + (vals (get collection author-name {}))))
+(defn author-song-count
+  ([author-info]
+    (reduce + (map #(get % song-count-key 0) (vals author-info))))
+  ([collection author-name]
+  (let [author-info (get collection author-name)]
+      (author-song-count author-info))))
 
 (defn walk [dirpath pattern]
   (doall (filter #(re-matches pattern (.getName %))
@@ -46,11 +55,12 @@
   "check if user truly listens to this author
    (to filter out those where there is only 1-2 songs)"
   [[_ author-info]]
-  (let [total-songs (reduce + (vals author-info))
+  (let [total-songs (author-song-count author-info)
         album-count (count author-info)]
     (or (> total-songs 5)
         (and (> album-count 1)
-             (every? #(> % 1) (vals author-info))))))
+             (every? #(> % 1) (map #(get % song-count-key)
+                                  (vals author-info)))))))
 
 (defn only-listened-authors [collection]
   (into {} (filter author-is-listened collection)))

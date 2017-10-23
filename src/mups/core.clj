@@ -13,17 +13,6 @@
 (def collection-reader :json)
 (def diff-writer :json)
 
-(defn save-collection [collection path]
-  (let [my-pretty-printer (create-pretty-printer
-                           (assoc default-pretty-print-options
-                                  :indent-arrays? true))]
-   (spit path (generate-string
-               (into (sorted-map)
-                     (map (fn [[k v]] [k (sort (keys v))])
-                          collection))
-               {:pretty my-pretty-printer})))
-  collection)
-
 (defmulti save-collection (fn [type collection path] type))
 (defmulti read-collection (fn [type path] type))
 (defmulti save-diff (fn [type collection path] type))
