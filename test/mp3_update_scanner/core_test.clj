@@ -122,39 +122,48 @@
                             "albums" ["album1" "album3"]
                             "author_albums" {"author" ["album2"]}})
            {"author" {"album4" 4}}))
-    (is (= (remove-singles {"author" {"s" 1 "s3" 2}
-                            "author2" {"x" 2 "k" 1}})
-           {"author" {"s3" 2}
-            "author2" {"x" 2}}))
-    (is (= (remove-singles {"author" {"s" 1 "s3" nil}
-                            "author2" {"x" 2 "k" 1}})
+    (is (= (remove-singles {"author" {"s" {"song-count" 1} "s3" {"song-count" 2}}
+                            "author2" {"x" {"song-count" 2} "k" {"song-count" 1}}})
+           {"author" {"s3" {"song-count" 2}}
+            "author2" {"x" {"song-count" 2}}}))
+
+    (is (= (remove-singles {"author" {"s" {"song-count" 1} "s3" nil}
+                            "author2" {"x" {"song-count" 2} "k" {"song-count" 1}}})
            {"author" {}
-            "author2" {"x" 2}}))))
+            "author2" {"x" {"song-count" 2}}}))))
+
+(defn album-info [track-count]
+  {"track-count" track-count})
 
 (deftest diff-tests
   (testing "find missing albums in one author"
-    (is (= (find-author-missing-albums {"a" 15 "b" 15} {"a" 1 "b" 1 "c" 1})
-           {"you have" {}, "you miss" #{"c"}, "both have" #{"a" "b"}}))))
+    (is (= (find-author-missing-albums {"a" (album-info 1) "b" (album-info 1)}
+                                       {"a" (album-info 1) "b" (album-info 1) "c" (album-info 1)})
+           {"you have" {},
+            "you miss" [{"track-count" 1, "title" "c"}],
+            "both have" [{"track-count" 1, "title" "a"} {"track-count" 1, "title" "b"}]}))))
 
 (deftest serialization-tests
   (testing "save-collection"
     (with-local-vars [ file-buf nil]
       (with-redefs [spit (fn [path str] (var-set file-buf str))]
-        (do (save-collection {"a" {"b" 1}} "some-path")
+        (do (save-collection :json {"a" {"b" 1}} "some-path")
             (is (= @file-buf "{\n  \"a\" : [\n    \"b\"\n  ]\n}"))))))
   (testing "read-collection"
     (with-redefs [slurp (fn [_] "{\"a\":[\"b\"]}")]
-      (is (= (read-collection "a.json")
+      (is (= (read-collection :json "a.json")
              {"a" ["b"]})))))
 
 (deftest get-author-from-lastfm-tests
   (testing "request-test")
   (testing "url test"
-    (is (re-seq
-         #"http://[a-zA-Z.0-9/]+\?method=artist\.gettopalbums&artist=ArtistName&api_key=[a-zA-Z0-9]+&format=json"
-         (lastfm-getalbums-url "ArtistName"))))
+    (is (with-redefs [api-key "someapikey"]
+         (re-seq
+          #"http://[a-zA-Z.0-9/]+\?method=artist\.gettopalbums&artist=ArtistName&api_key=[a-zA-Z0-9]+&format=json"
+          (lastfm-getalbums-url "ArtistName")))))
   (testing "get-authors-from-collection"
-    (with-redefs [concur-get
+    (with-redefs [api-key "someapikey"
+                  concur-get
                   (fn [urls]
                     (repeat (count urls)
                             {:body "dummy_response_body"}))
@@ -171,7 +180,7 @@
                                                        "artist" {"name" "artist1"}}
                                                       {"name" "album2"
                                                        "artist" {"name" "artist1"}}]}})
-           {"album1" 1 "album2" 1})))
+           {"album1" {"song-count" 1}, "album2" {"song-count" 1}})))
   (testing "is-error-response"
     (is (is-error-response {"error" 15 "message" "some error message"}))
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}
