@@ -1,15 +1,16 @@
 (ns mups.core-test
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
+            [cheshire.core :refer [generate-string]]
             [mups.core :refer :all]
             [mups.libscan :refer :all]
             [mups.lastfm :refer :all]))
 
 (defn album-info [track-count & [album-name]]
   (let [res {"song-count" track-count}]
-        (if album-name
-          (assoc res "title" album-name)
-          res)))
+        res (if album-name
+                (assoc res "title" album-name)
+                res)))
 
 (deftest add-author-info-tests
   (testing "add-author to existing authors"
@@ -135,7 +136,7 @@
            (parse-prog-options ["--ignore-path=ignore"
                                 "--music-path=music"
                                 "--cached-path=cache"])))
-    (is (= ["music" nil "diff.json" nil "lastfm.json"]
+    (is (= ["music" "cache.json" "diff.json" nil "lastfm.json"]
            (parse-prog-options ["--music-path=music"])))
     (is (validate-args ["music" nil "diff.json" nil nil]))
     (is (validate-args [nil "cache" nil nil nil]))
@@ -183,8 +184,17 @@
              {"a" ["b"]}))))
   (testing "saving diff"
     (with-redefs [spit (fn [path data] data)]
-      (is (= (save-diff :json {"you have" {} "you miss" {} "both have" {}} "")
-            "{\n  \"both have\" : { },\n  \"you have\" : { },\n  \"you miss\" : { }\n}")))))
+      (is (= (save-diff :json {"author" {"you have" [] "you miss" [] "both have" []}} "")
+              "{\n  \"author\" : {\n    \"both have\" : [ ],\n    \"you have\" : [ ],\n    \"you miss\" : [ ]\n  }\n}"))
+      (is (= (clojure.string/replace
+                             (save-diff :json {"author"
+                                               {"you have" [(album-info 4 "b") (album-info 1 "a")]
+                                   "you miss" []`
+                                   "both have" []}}
+                           "")
+                              #"\s"
+                              "")
+       "{\"author\":{\"bothhave\":[],\"youhave\":[{\"song-count\":1,\"title\":\"a\"},{\"song-count\":4,\"title\":\"b\"}],\"youmiss\":[]}}")))))
 
 (deftest get-author-from-lastfm-tests
   (testing "request-test")
@@ -214,7 +224,17 @@
                                                        "artist" {"name" "artist1"}}
                                                       {"name" "album2"
                                                        "artist" {"name" "artist1"}}]}})
-           {"album1" (album-info 1) "album2" (album-info 1)})))
+           {"album1" (album-info 1) "album2" (album-info 1)}))
+    (is (= (album-response->album-info
+               (generate-string {"album"
+                                   {"name" "someAlbumName"
+                                    "artist" "someArtistName"
+                                    "url" "AlbumUrl"
+                                    "image" [{"#text" "smallAlbumUrl" "size" "small"}
+                                             {"#text" "largeAlbumUrl" "size" "large"}]
+                                    "tracks" {"track" [1 2 3 4 5 6]}}}))
+
+             {"song-count" 6 "image-url" "largeAlbumUrl" "album-url" "AlbumUrl"})))
   (testing "is-error-response"
     (is (is-error-response {"error" 15 "message" "some error message"}))
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}

@@ -56,6 +56,7 @@
 
 (def song-count-key "song-count")
 (def image-url-key "image-url")
+(def album-url-key "album-url")
 
 (defn album-response->album-info [body]
   (let [decoded-body (json/parse-string body)]
@@ -65,13 +66,17 @@
                             (get "tracks")
                             (get "track")
                             (count))
-            image-url (-> decoded-body
+            url (-> decoded-body
+                    (get "album")
+                    (get "url"))
+            images  (-> decoded-body
                           (get "album")
-                          (get "image")
-                          (first)
-                          (second))]
+                          (get "image"))
+            image-url (and images
+                        (get (last images) "#text"))]
         {song-count-key song-count
-         image-url-key image-url}))))
+         image-url-key image-url
+         album-url-key url}))))
 
 (defn update-song-counts [collection]
   (into {}
@@ -138,13 +143,3 @@
     (into {} (map (fn [author body]
                     [author (author-response->author-info body)])
                   authors bodies))))
-
-
-
-
-
-
-
-
-
-

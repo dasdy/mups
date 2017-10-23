@@ -2,7 +2,8 @@
   (:require claudio.id3
             [clojure.java.io :refer [file]]
             [mups.lastfm :refer :all]
-            [clojure.data :refer [diff]]))
+            [clojure.data :refer [diff]]
+            [cheshire.core :refer [generate-string]]))
 
 
 "structure:
@@ -22,8 +23,8 @@
         artist-info (get collection artist-name {})]
     (assoc collection artist-name
            (update-in artist-info [album-name]
-                    #(if % (update-in % [song-count-key] inc)
-                          {song-count-key 1})))))
+                      #(if % (update-in % [song-count-key] inc)
+                           {song-count-key 1})))))
 
 (defn author-song-count
   ([author-info]

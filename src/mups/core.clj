@@ -42,10 +42,12 @@
    (spit path
          (generate-string
           (into (sorted-map)
-                (map (fn [[k v]]
-                       [k (into (sorted-map)
-                                (map (fn [[k v]] [k (sort v)])
-                                     v))])
+                (map (fn [[artist-name artist-diff]]
+                       [artist-name
+                        (into (sorted-map)
+                                (map (fn [[diff-mode albums]]
+                                       [diff-mode (sort-by (fn [album-info] (get album-info "title")) albums)])
+                                     artist-diff))])
                      diff))
           {:pretty my-pretty-printer}))))
 
@@ -70,7 +72,7 @@
   [["-m" "--music-path PATH" "Path to your music library"
     :default nil]
    ["-c" "--cached-path PATH" "Path to collection if you have already scanned library"
-    :default nil]
+    :default "cache.json"]
    ["-o" "--output PATH" "Path to output (results of music scan). Should default to path of cached-path or, if not given, to out.json"
     :default "diff.json"]
    ["-l" "--lastfm PATH" "Path to Last.fm version of your  library (not removing albums you already have"
@@ -90,13 +92,13 @@
 
 (defn build-user-collection
   [mpath cachepath ignored-stuff]
-  (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
+  (-<> (if mpath (get-all-mp3-tags-in-dir mpath) [])
       (build-collection (if (and cachepath (.exists (file cachepath)))
                           (read-collection collection-reader cachepath)
                           {}))
       (only-listened-authors)
       (remove-ignored ignored-stuff)
-      (save-collection collection-writer cachepath)))
+      (save-collection collection-writer <> cachepath)))
 
 (defn build-diff
   [user-collection ignored-stuff lastfmpath outputpath]
