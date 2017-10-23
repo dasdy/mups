@@ -54,16 +54,24 @@
                       (get "track")
                       (count)))))))
 
+(def song-count-key "song-count")
+(def image-url-key "image-url")
 
-(defn album-response->song-count
-  [body]
+(defn album-response->album-info [body]
   (let [decoded-body (json/parse-string body)]
     (when (not (is-error-response decoded-body))
-      (-> decoded-body
-          (get "album")
-          (get "tracks")
-          (get "track")
-          (count)))))
+      (let [song-count (-> decoded-body
+                            (get "album")
+                            (get "tracks")
+                            (get "track")
+                            (count))
+            image-url (-> decoded-body
+                          (get "album")
+                          (get "image")
+                          (first)
+                          (second))]
+        {song-count-key song-count
+         image-url-key image-url}))))
 
 (defn update-song-counts [collection]
   (into {}
@@ -74,7 +82,7 @@
                      bodies (concur-get urls)]
                  (println "updating counts for author: " author)
                  [author (into {}
-                               (map (fn [album body] [album (album-response->song-count body)])
+                               (map (fn [album body] [album (album-response->album-info body)])
                                     albums bodies))]))
              collection)))
 
@@ -90,18 +98,20 @@
                 (.toLowerCase (-> x
                                   (get "artist")
                                   (get "name")))
-                song-count 1] ;; this will be updated in the next step,
+                song-count 1]
+            ;; this will be updated in the next step,
             ;; for now this is 1 to make less requests
-            (assoc acc album-name song-count)))
+            (assoc acc album-name {"song-count" 1})))
         {})))
 
 (defn remove-singles [collection]
   (into {}
         (map (fn [[author albums]]
-               [author (into {} (filter (fn [[album song-count]]
-                                          (and song-count
-                                               (or (> song-count 1)
-                                                   (re-find #"^.*?(single|\[single\]|\(single\))$" album))))
+               [author (into {} (filter (fn [[album-name album-info]]
+                                          (let [song-count (get album-info song-count-key)]
+                                           (and song-count
+                                            (or (> song-count 1)
+                                                (re-find #"^.*?(single|\[single\]|\(single\))$" album-name)))))
                                         albums))])
              collection)))
 

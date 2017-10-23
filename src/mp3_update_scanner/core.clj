@@ -5,7 +5,13 @@
      (:require [clojure.tools.cli :refer [parse-opts]]
                [cheshire.core :refer :all]
                [clojure.java.io :refer [file]]
+               [hiccup.core :refer [html]]
+               [swiss.arrows :refer [-<>]]
                [mp3-update-scanner.lastfm :as lastfm]))
+
+(def collection-writer :json)
+(def collection-reader :json)
+(def diff-writer :json)
 
 (defn save-collection [collection path]
   (let [my-pretty-printer (create-pretty-printer
@@ -18,7 +24,29 @@
                {:pretty my-pretty-printer})))
   collection)
 
-(defn save-diff [diff path]
+(defmulti save-collection (fn [type collection path] type))
+(defmulti read-collection (fn [type path] type))
+(defmulti save-diff (fn [type collection path] type))
+
+(defmethod save-collection :json [dispatcher collection path]
+  (let [my-pretty-printer (create-pretty-printer
+                           (assoc default-pretty-print-options
+                                  :indent-arrays? true))]
+    (spit path (generate-string
+                (into (sorted-map)
+                      (map (fn [[k v]] [k (sort (keys v))])
+                           collection))
+                {:pretty my-pretty-printer}))
+    collection))
+
+(defmethod save-collection :sqlite [dispatcher collection path]
+  (println type " " collection " " path))
+
+(defmethod read-collection :json [dispatcher path]
+  (parse-string (slurp path)))
+
+
+(defmethod save-diff :json [dispatcher diff path]
   (let [my-pretty-printer (create-pretty-printer
                           (assoc default-pretty-print-options
                                  :indent-arrays? true))]
@@ -32,11 +60,22 @@
                      diff))
           {:pretty my-pretty-printer}))))
 
-(defn read-collection [path]
-  (parse-string (slurp path)))
-
-(defn remove-trailing-0 [string]
-  (apply str (remove #(= (int %) 0) string)))
+(defmethod save-diff :html [dispatcher diff path]
+  (let [album-item
+        (fn [album-info]
+          [:li.album
+           [:img {:src (get image-url-key album-info "")}]
+           [:div.title (get album-title-key album-info)]])
+        album-lst (fn [albums] [:ul (map album-item albums)])]
+   (html (map (fn [artist-name diff]
+                [:div.artist artist-name [:br]
+                 "you have: " [:br]
+                 (album-lst (get diff "you have"))
+                 "you miss: " [:br]
+                 (album-lst (get diff "you miss"))
+                 "both have: " [:br]
+                 (album-lst (get diff "both have"))])
+              diff))))
 
 (def cli-options
   [["-m" "--music-path PATH" "Path to your music library"
@@ -64,28 +103,28 @@
   [mpath cachepath ignored-stuff]
   (-> (if mpath (get-all-mp3-tags-in-dir mpath) [])
       (build-collection (if (and cachepath (.exists (file cachepath)))
-                          (read-collection cachepath)
+                          (read-collection collection-reader cachepath)
                           {}))
       (only-listened-authors)
       (remove-ignored ignored-stuff)
-      (save-collection cachepath)))
+      (save-collection collection-writer cachepath)))
 
 (defn build-diff
   [user-collection ignored-stuff lastfmpath outputpath]
-  (-> user-collection
+  (-<> user-collection
            (get-authors-from-lastfm)
            (remove-ignored ignored-stuff)
            (update-song-counts)
            (remove-singles)
-           (save-collection lastfmpath)
+           (save-collection collection-writer <> lastfmpath)
            (diff-collections user-collection)
-           (save-diff outputpath)))
+           (save-diff diff-writer <> outputpath)))
 
 (defn -main [& args]
   (let [[mpath cachepath outputpath ignorepath lastfmpath :as parsed-args]
         (parse-prog-options args)
         ignored-stuff (when (and ignorepath (.exists (file ignorepath)))
-                           (read-collection ignorepath))]
+                           (read-collection collection-reader ignorepath))]
     (when (validate-args parsed-args)
       (let [user-collection (build-user-collection mpath cachepath ignored-stuff)]
        (build-diff user-collection ignored-stuff lastfmpath outputpath)))))

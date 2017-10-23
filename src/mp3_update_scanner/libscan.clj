@@ -55,12 +55,21 @@
 (defn only-listened-authors [collection]
   (into {} (filter author-is-listened collection)))
 
+(def album-title-key "title")
+
 (defn find-author-missing-albums [local-author-info lastfm-author-info]
   (let [[user-added missing common] (diff (into #{} (keys local-author-info))
-                                          (into #{} (keys lastfm-author-info)))]
-    {"you have" (or user-added {})
-     "you miss" (or missing {})
-     "both have" (or common {})}))
+                                          (into #{} (keys lastfm-author-info)))
+        mapper (fn [map] (fn [album-title] (assoc "title" album-title (get map album-title))))]
+    {"you have" (if user-added
+                  (map (mapper local-author-info) user-added)
+                  {})
+     "you miss" (if missing
+                  (map (mapper lastfm-author-info) missing)
+                  {})
+     "both have" (if common
+                   (map (mapper lastfm-author-info) common)
+                   {})}))
 
 (defn diff-collections [lastfm-collection user-collection]
   (into {} (map (fn [author]

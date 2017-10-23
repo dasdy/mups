@@ -84,11 +84,6 @@
        (is (= (set (map #(.getName %) (get-all-mp3-in-dir ".")))
               #{"file1.mp3" "file2.mp3" "file3.mp3"}))))))
 
-(deftest remove-trailing-0-tests
-  (testing "should remove 0 at end"
-    (is (= "mystring"
-           (remove-trailing-0 (list \m \y \s \t \r \i \n \g 0))))))
-
 (deftest author-is-listened-tests
   (testing "is-listened?"
     (is (author-is-listened ["author" {"a" 5 "b" 9}]))

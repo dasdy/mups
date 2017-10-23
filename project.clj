@@ -12,7 +12,9 @@
                  [compojure "1.5.2"]
                  [org.clojure/tools.cli "0.3.5"]
                  [selmer "1.10.7"]
-                 [prone "1.1.4"]]
+                 [prone "1.1.4"]
+                 [swiss-arrows "1.0.0"]
+                 [hiccup "1.0.5"]]
   :main ^:skip-aot mp3-update-scanner.core
   :target-path "target/%s"
   :resource-paths ["resources"]
