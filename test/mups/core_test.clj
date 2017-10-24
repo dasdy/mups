@@ -239,3 +239,50 @@
     (is (is-error-response {"error" 15 "message" "some error message"}))
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}
                                                        {"name" "album2"}]}})))))
+
+(deftest html-diff-generation
+  (testing "album-info creates correct hiccup structure"
+    (is (= (album-info-html {"title" "someAlbumName"
+                             "album-url" "albumUrl"
+                             "song-count" 12
+                             "image-url" "imageUrl"})
+           [:div.album-info
+            [:img {:src "imageUrl"}]
+            [:a {:href "albumUrl"} "someAlbumName"]]))
+    (is (= (album-info-html {"title" "someAlbumName"
+                             "song-count" 12})
+           [:div.album-info
+            [:img {:src ""}]
+            [:a {:href ""} "someAlbumName"]])))
+  (testing "albums-list-html creates unordered list"
+    (is (= (albums-list-html [{"title" "album1"
+                                "album-url" "album1Url"
+                                "song-count" 12
+                               "image-url" "image1Url"}
+                              {"title" "album2"
+                               "album-url" "album2Url"
+                                "song-count" 12
+                               "image-url" "image2Url"}])
+           [:ul.albums-list
+            [[:li
+               [:div.album-info
+                [:img {:src "image1Url"}]
+                [:a {:href "album1Url"} "album1"]]]
+             [:li
+              [:div.album-info
+               [:img {:src "image2Url"}]
+               [:a {:href "album2Url"} "album2"]]]]])))
+  (testing "diff-item-html creates summary tag"
+    (is (= (diff-item-html "message" [{"title" "album1"
+                                        "album-url" "album1Url"
+                                        "song-count" 12
+                                        "image-url" "image1Url"}])
+           [:div.diff-item
+            [:details
+             [:summary "message(1)"]
+             [:ul.albums-list
+              [[:li
+                [:div.album-info
+                 [:img {:src "image1Url"}]
+                 [:a {:href "album1Url"} "album1"]]]]]]]))))
+

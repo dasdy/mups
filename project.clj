@@ -18,6 +18,7 @@
   :main ^:skip-aot mups.core
   :target-path "target/%s"
   :resource-paths ["resources"]
+  :jvm-opts ["-Xmx1g"]
   :profiles {:uberjar {:aot :all
                        :uberjar-name "mups.jar"}
              :dev {:ring {:stacktrace-middleware prone.middleware/wrap-exceptions}}}

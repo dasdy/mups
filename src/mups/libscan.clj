@@ -73,7 +73,6 @@
                                           (into #{} (keys lastfm-author-info)))
         mapper (fn [map] (fn [album-title] (assoc (get map album-title)
                                                 "title" album-title)))]
-    (println "user-added: " user-added "missing: " missing "common: " common)
     {"you have" (if user-added
                   (map (mapper local-author-info) user-added)
                   {})

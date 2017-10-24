@@ -11,7 +11,7 @@
 
 (def collection-writer :json)
 (def collection-reader :json)
-(def diff-writer :json)
+(def diff-writer :html)
 
 (defmulti save-collection (fn [type collection path] type))
 (defmulti read-collection (fn [type path] type))
@@ -22,9 +22,7 @@
                            (assoc default-pretty-print-options
                                   :indent-arrays? true))]
     (spit path (generate-string
-                (into (sorted-map)
-                      (map (fn [[k v]] [k (sort (keys v))])
-                           collection))
+                (into (sorted-map) collection)
                 {:pretty my-pretty-printer}))
     collection))
 
@@ -51,22 +49,29 @@
                      diff))
           {:pretty my-pretty-printer}))))
 
+
+(defn album-info-html [album-info]
+  [:div.album-info
+   [:img {:src (get album-info image-url-key "")}]
+   [:a {:href (get album-info album-url-key "")} (get album-info album-title-key)]])
+
+(defn albums-list-html [albums]
+  (let [album-htmls (map (fn [album] [:li (album-info-html album)]) albums)]
+    [:ul.albums-list album-htmls]))
+
+(defn diff-item-html [message diff-item]
+  [:div.diff-item
+   [:details [:summary (str message "(" (count diff-item) ")")]
+    (albums-list-html diff-item)]])
+
 (defmethod save-diff :html [dispatcher diff path]
-  (let [album-item
-        (fn [album-info]
-          [:li.album
-           [:img {:src (get image-url-key album-info "")}]
-           [:div.title (get album-title-key album-info)]])
-        album-lst (fn [albums] [:ul (map album-item albums)])]
-   (html (map (fn [artist-name diff]
-                [:div.artist artist-name [:br]
-                 "you have: " [:br]
-                 (album-lst (get diff "you have"))
-                 "you miss: " [:br]
-                 (album-lst (get diff "you miss"))
-                 "both have: " [:br]
-                 (album-lst (get diff "both have"))])
-              diff))))
+  (spit path
+        (html (map (fn [[artist-name diff]]
+                     [:div.artist artist-name
+                      (diff-item-html "you have" (get diff "you have"))
+                      (diff-item-html "you miss" (get diff "you miss"))
+                      (diff-item-html "both have" (get diff "both have"))])
+                   diff))))
 
 (def cli-options
   [["-m" "--music-path PATH" "Path to your music library"
@@ -108,8 +113,7 @@
            (update-song-counts)
            (remove-singles)
            (save-collection collection-writer <> lastfmpath)
-           (diff-collections user-collection)
-           (save-diff diff-writer <> outputpath)))
+           (diff-collections user-collection)))
 
 (defn -main [& args]
   (let [[mpath cachepath outputpath ignorepath lastfmpath :as parsed-args]
@@ -117,5 +121,6 @@
         ignored-stuff (when (and ignorepath (.exists (file ignorepath)))
                            (read-collection collection-reader ignorepath))]
     (when (validate-args parsed-args)
-      (let [user-collection (build-user-collection mpath cachepath ignored-stuff)]
-       (build-diff user-collection ignored-stuff lastfmpath outputpath)))))
+      (let [user-collection (build-user-collection mpath cachepath ignored-stuff)
+            diff (build-diff user-collection ignored-stuff lastfmpath outputpath)]
+       (save-diff diff-writer diff outputpath)))))
