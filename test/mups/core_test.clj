@@ -4,7 +4,10 @@
             [cheshire.core :refer [generate-string]]
             [mups.core :refer :all]
             [mups.libscan :refer :all]
-            [mups.lastfm :refer :all]))
+            [mups.lastfm :refer :all]
+            [mups.diffgen :refer :all]
+            [mups.collection :refer :all]
+            [mups.cli :refer :all]))
 
 (defn album-info [track-count & [album-name]]
   (let [res {"song-count" track-count}]
@@ -220,11 +223,11 @@
                                       "author2" {"album2" (album-info 3)}
                                       "author3" {"album3" (album-info 5)}}))))))
   (testing "response -> album-info"
-    (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "album1"
+    (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "aLbuM1"
                                                        "artist" {"name" "artist1"}}
-                                                      {"name" "album2"
+                                                      {"name" "aLbuM2"
                                                        "artist" {"name" "artist1"}}]}})
-           {"album1" (album-info 1) "album2" (album-info 1)}))
+           {"album1" (album-info 1 "aLbuM1") "album2" (album-info 1 "aLbuM2")}))
     (is (= (album-response->album-info
                (generate-string {"album"
                                    {"name" "someAlbumName"

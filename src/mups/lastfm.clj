@@ -42,23 +42,16 @@
 (defn is-error-response [body]
   (not (nil? (get body "error"))))
 
-(defn album-song-count [author-name album-name]
-  (http/get (lastfm-get-detailed-album author-name album-name)
-            (fn [{:keys [body]}]
-              (print (str "got response for: " author-name ": " album-name))
-              (let [decoded-body (json/parse-string body)]
-                (when-not (is-error-response decoded-body)
-                  (-> decoded-body
-                      (get "album")
-                      (get "tracks")
-                      (get "track")
-                      (count)))))))
-
 (def song-count-key "song-count")
 (def image-url-key "image-url")
 (def album-url-key "album-url")
 
-(defn album-response->album-info [body]
+(defn album-response->album-info
+  "transform body of last.fm album.getInfo http response into detailed album representation, for example
+    {\"song-count\" 15
+     \"album-url\" \"http://some-album-url\"
+     \"image-url\" \"http://some-image-url\"}"
+  [body]
   (let [decoded-body (json/parse-string body)]
     (when-not (is-error-response decoded-body)
       (let [song-count (-> decoded-body
@@ -78,14 +71,16 @@
          image-url-key image-url
          album-url-key url}))))
 
-(defn update-song-counts [collection]
+(defn fetch-album-details
+  "load album details for all authors in collections from last.fm"
+  [collection]
   (into {}
         (map (fn [[author albums]]
                (let [albums (keys albums)
                      urls (map #(lastfm-get-detailed-album author %)
                                albums)
                      bodies (concur-get urls)]
-                 (println "updating counts for author: " author)
+                 (println "fetching detailed info for author: " author)
                  [author (into {}
                                (map (fn [album body] [album (album-response->album-info body)])
                                     albums bodies))]))
@@ -106,7 +101,8 @@
            ;; this will be updated in the next step,
            ;; for now this is 1 to make less requests
            ]
-       (assoc acc album-name {"song-count" 1})))
+       (assoc acc album-name {"song-count" 1
+                              "title" (get x "name")})))
    {}
    (get (get lastfm-response "topalbums") "album")))
 
@@ -121,23 +117,20 @@
                                         albums))])
              collection)))
 
-(defn get-lastfm-author-info
-  "only for requesting info, returns decoded json from last.fm"
-  [author-name]
-  (http/get (lastfm-getalbums-url author-name)
-            (fn [{:keys [body]}]
-              (println (str "got response for: " author-name))
-              (let [decoded-body (json/parse-string body)]
-                (when-not (is-error-response decoded-body)
-                  (albums-from-lastfm decoded-body))))))
-
 (defn author-response->author-info
+  "transform body of last.fm artist.getInfo http response into basic artist representation, for example
+  {\"album1\" {\"song-count\" 1}
+   \"album2\" {\"song-count\" 1}}
+  since the artist.getInfo does not contain track amount of album, result will only contain names of albums
+  with \"song-count\" attribute equal to 1"
   [body]
   (let [decoded-body (json/parse-string body)]
     (when-not (is-error-response decoded-body)
       (albums-from-lastfm decoded-body))))
 
-(defn get-authors-from-lastfm [collection]
+(defn get-authors-from-lastfm
+  "fetch basic authors info (which albums they have) from last.fm"
+  [collection]
   (let [authors (keys collection)
         urls (map lastfm-getalbums-url authors)
         bodies (concur-get urls)]

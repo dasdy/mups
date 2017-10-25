@@ -15,7 +15,7 @@
                  [prone "1.1.4"]
                  [swiss-arrows "1.0.0"]
                  [hiccup "1.0.5"]]
-  :main ^:skip-aot mups.core
+  :main ^:skip-aot mups.cli
   :target-path "target/%s"
   :resource-paths ["resources"]
   :jvm-opts ["-Xmx1g"]
