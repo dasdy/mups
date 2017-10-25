@@ -53,8 +53,11 @@
 
 (defn album-info-html [album-info]
   [:div.album-info
-   [:img {:src (get album-info image-url-key "")}]
-   [:a {:href (get album-info album-url-key "")} (get album-info album-title-key)]])
+   [:img {:src (get album-info image-url-key "")
+          :height 120}]
+    (if-let [album-url (get album-info album-url-key)]
+        [:a {:href album-url} (get album-info album-title-key)]
+        (get album-info album-title-key))])
 
 (defn albums-list-html [albums]
   (let [album-htmls (map (fn [album] [:li (album-info-html album)]) albums)]
@@ -65,15 +68,31 @@
    [:details [:summary (str message "(" (count diff-item) ")")]
     (albums-list-html diff-item)]])
 
+(defn artist-list-html [artist-list]
+  (map (fn [[artist-name diff]]
+         [:div.artist artist-name
+          (diff-item-html "you have" (get diff "you have"))
+          (diff-item-html "you miss" (get diff "you miss"))
+          (diff-item-html "both have" (get diff "both have"))])
+       (sort-by (fn [[artist-name _]] artist-name)
+                artist-list)))
+
+(defn grouped-artists-list-html [artist-list]
+  (let [groups (group-by (fn [[artist-name _]]
+                           (str (first artist-name)))
+                         artist-list)
+        sorted-groups (sort-by (fn [[first-letter _]] first-letter) groups)]
+    (map (fn [[first-letter artist-list]]
+           [:div.artist-list
+            [:details
+             [:summary first-letter]
+             (artist-list-html artist-list)]])
+         sorted-groups)))
+
 (defmethod save-diff :html [dispatcher diff path]
   (spit path
         (html [:head (include-css "resources/public/css/albums-list.css")
-               [:body (map (fn [[artist-name diff]]
-                        [:div.artist artist-name
-                         (diff-item-html "you have" (get diff "you have"))
-                         (diff-item-html "you miss" (get diff "you miss"))
-                         (diff-item-html "both have" (get diff "both have"))])
-                      diff)]])))
+               [:body (grouped-artists-list-html diff)]])))
 
 (def cli-options
   [["-m" "--music-path PATH" "Path to your music library"

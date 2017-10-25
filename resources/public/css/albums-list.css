@@ -4,7 +4,7 @@ body {
 a {
     color: #C00;
 }
-details {
+.diff-item>details {
     border: 1px solid #E1E1E1;
     border-radius: 5px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, .4);
@@ -12,11 +12,12 @@ details {
     margin: 0 0 .4em;
     padding: 1%;
 }
-details[open] {
+.diff-item>details[open] {
     background: #E1E1E1;
 }
-summary {
-    background: -webkit-linear-gradient(top, #FAFAFA 50%, #E1E1E1 50%);
+.diff-item>details>summary {
+    /* background: -webkit-linear-gradient(top, #FAFAFA 50%, #E1E1E1 50%);*/
+
     border-radius: 5px;
     cursor: pointer;
     font-size: .8em;
@@ -27,13 +28,13 @@ summary {
     width: 102%;
 }
 summary:hover,
-details[open] summary {
+.diff-item>details[open] summary {
     background: #E1E1E1;
 }
 summary::-webkit-details-marker {
     display: none
 }
-summary:before {
+.diff-item summary:before {
     border-radius: 5px;
     content: "+";
     color: #363636;
@@ -46,7 +47,7 @@ summary:before {
     text-align: center;
     width: 20px;
 }
-details[open] summary:before {
+.diff-item>details[open] summary:before {
     content: "-";
     margin-top: -4px;
 }

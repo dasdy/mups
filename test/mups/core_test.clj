@@ -247,13 +247,13 @@
                              "song-count" 12
                              "image-url" "imageUrl"})
            [:div.album-info
-            [:img {:src "imageUrl"}]
+            [:img {:src "imageUrl" :height 120}]
             [:a {:href "albumUrl"} "someAlbumName"]]))
     (is (= (album-info-html {"title" "someAlbumName"
                              "song-count" 12})
            [:div.album-info
-            [:img {:src ""}]
-            [:a {:href ""} "someAlbumName"]])))
+            [:img {:src "", :height 120}]
+            "someAlbumName"])))
   (testing "albums-list-html creates unordered list"
     (is (= (albums-list-html [{"title" "album1"
                                 "album-url" "album1Url"
@@ -266,11 +266,11 @@
            [:ul.albums-list
             [[:li
                [:div.album-info
-                [:img {:src "image1Url"}]
+                [:img {:src "image1Url" :height 120}]
                 [:a {:href "album1Url"} "album1"]]]
              [:li
               [:div.album-info
-               [:img {:src "image2Url"}]
+               [:img {:src "image2Url" :height 120}]
                [:a {:href "album2Url"} "album2"]]]]])))
   (testing "diff-item-html creates summary tag"
     (is (= (diff-item-html "message" [{"title" "album1"
@@ -283,6 +283,96 @@
              [:ul.albums-list
               [[:li
                 [:div.album-info
-                 [:img {:src "image1Url"}]
-                 [:a {:href "album1Url"} "album1"]]]]]]]))))
+                 [:img {:src "image1Url" :height 120}]
+                 [:a {:href "album1Url"} "album1"]]]]]]])))
+  (testing "artist-list-html creates diff with 3 sub-lists"
+    (is (= (artist-list-html {"aartist" {"you have" [{"title" "album1"
+                                                      "album-url" "album1Url"
+                                                      "image-url" "image1Url"}]
+                                         "you miss" [{"title" "album2"
+                                                      "album-url" "album2Url"
+                                                      "image-url" "image2Url"}
+                                                     {"title" "album3"
+                                                      "album-url" "album3Url"
+                                                      "image-url" "image3Url"}]
+                                         "both have" []}
+                              "bartist" {"you have" []
+                                         "you miss" []
+                                         "both have" [{"title" "album4"
+                                                      "album-url" "album4Url"
+                                                       "image-url" "image4Url"}]}})
+           [[:div.artist
+             "aartist"
+             [:div.diff-item
+              [:details
+               [:summary "you have(1)"]
+               [:ul.albums-list
+                [[:li
+                   [:div.album-info
+                    [:img {:src "image1Url", :height 120}]
+                    [:a {:href "album1Url"} "album1"]]]]]]]
+             [:div.diff-item
+              [:details
+               [:summary "you miss(2)"]
+               [:ul.albums-list
+                [[:li
+                   [:div.album-info
+                    [:img {:src "image2Url", :height 120}]
+                    [:a {:href "album2Url"} "album2"]]]
+                 [:li
+                  [:div.album-info
+                   [:img {:src "image3Url", :height 120}]
+                   [:a {:href "album3Url"} "album3"]]]]]]]
+             [:div.diff-item
+              [:details [:summary "both have(0)"] [:ul.albums-list ()]]]]
+            [:div.artist
+             "bartist"
+             [:div.diff-item
+              [:details [:summary "you have(0)"] [:ul.albums-list ()]]]
+             [:div.diff-item
+              [:details [:summary "you miss(0)"] [:ul.albums-list ()]]]
+             [:div.diff-item
+              [:details
+               [:summary "both have(1)"]
+               [:ul.albums-list
+                [[:li
+                   [:div.album-info
+                    [:img {:src "image4Url", :height 120}]
+                    [:a {:href "album4Url"} "album4"]]]]]]]]])))
+  (testing "grouped-artists-list-html groups artists by first letter"
+    (with-redefs [artist-list-html identity]
+      (is (= (grouped-artists-list-html {"an artist" "an artist description"
+                                         "a second artist" "second description"
+                                         "third artist" "third description"
+                                         "fourth artist" "fourth description"})
+             [[:div.artist-list
+                [:details
+                 [:summary "a"]
+                 [["an artist" "an artist description"]
+                  ["a second artist" "second description"]]]]
+              [:div.artist-list
+               [:details
+                [:summary "f"]
+                [["fourth artist" "fourth description"]]]]
+              [:div.artist-list
+               [:details [:summary "t"] [["third artist" "third description"]]]]])))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
