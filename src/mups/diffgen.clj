@@ -2,7 +2,7 @@
   (:require [cheshire.core :refer [generate-string create-pretty-printer
                                    default-pretty-print-options]]
             [mups.libscan :refer [album-title-key]]
-            [mups.lastfm :refer [album-url-key image-url-key]]
+            [mups.lastfm :refer [album-url-key image-url-key song-count-key]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css]]))
 
@@ -27,12 +27,17 @@
   (spit path (make-json-diff-string diff)))
 
 (defn album-info-html [album-info]
-  [:div.album-info
-   [:img {:src (get album-info image-url-key "")
-          :height 120}]
+  (let [song-count (get album-info song-count-key nil)
+        album-title (get album-info album-title-key)
+        album-title-text (if song-count
+                           (str "(" song-count ")" album-title)
+                           (str "(?)" album-title))]
+   [:div.album-info
+    [:img {:src (get album-info image-url-key "")
+           :height 120}]
     (if-let [album-url (get album-info album-url-key)]
-        [:a {:href album-url} (get album-info album-title-key)]
-        (get album-info album-title-key))])
+      [:a {:href album-url} album-title-text]
+      album-title-text)]))
 
 (defn albums-list-html [albums]
   (let [album-htmls (map (fn [album] [:li (album-info-html album)]) albums)]

@@ -256,12 +256,18 @@
                              "image-url" "imageUrl"})
            [:div.album-info
             [:img {:src "imageUrl" :height 120}]
-            [:a {:href "albumUrl"} "someAlbumName"]]))
+            [:a {:href "albumUrl"} "(12)someAlbumName"]]))
     (is (= (album-info-html {"title" "someAlbumName"
                              "song-count" 12})
            [:div.album-info
             [:img {:src "", :height 120}]
-            "someAlbumName"])))
+            "(12)someAlbumName"]))
+    (is (= (album-info-html {"title" "someAlbumName"
+                             "album-url" "albumUrl"
+                             "image-url" "imageUrl"})
+           [:div.album-info
+            [:img {:src "imageUrl" :height 120}]
+            [:a {:href "albumUrl"} "(?)someAlbumName"]])))
   (testing "albums-list-html creates unordered list"
     (is (= (albums-list-html [{"title" "album1"
                                 "album-url" "album1Url"
@@ -275,11 +281,11 @@
             [[:li
                [:div.album-info
                 [:img {:src "image1Url" :height 120}]
-                [:a {:href "album1Url"} "album1"]]]
+                [:a {:href "album1Url"} "(12)album1"]]]
              [:li
               [:div.album-info
                [:img {:src "image2Url" :height 120}]
-               [:a {:href "album2Url"} "album2"]]]]])))
+               [:a {:href "album2Url"} "(12)album2"]]]]])))
   (testing "diff-item-html creates summary tag"
     (is (= (diff-item-html "message" [{"title" "album1"
                                         "album-url" "album1Url"
@@ -292,7 +298,7 @@
               [[:li
                 [:div.album-info
                  [:img {:src "image1Url" :height 120}]
-                 [:a {:href "album1Url"} "album1"]]]]]]])))
+                 [:a {:href "album1Url"} "(12)album1"]]]]]]])))
   (testing "artist-list-html creates diff with 3 sub-lists"
     (is (= (artist-list-html {"aartist" {"you have" [{"title" "album1"
                                                       "album-url" "album1Url"
@@ -318,7 +324,7 @@
                 [[:li
                    [:div.album-info
                     [:img {:src "image1Url", :height 120}]
-                    [:a {:href "album1Url"} "album1"]]]]]]]
+                    [:a {:href "album1Url"} "(?)album1"]]]]]]]
              [:div.diff-item
               [:details
                [:summary "you miss(2)"]
@@ -326,11 +332,11 @@
                 [[:li
                    [:div.album-info
                     [:img {:src "image2Url", :height 120}]
-                    [:a {:href "album2Url"} "album2"]]]
+                    [:a {:href "album2Url"} "(?)album2"]]]
                  [:li
                   [:div.album-info
                    [:img {:src "image3Url", :height 120}]
-                   [:a {:href "album3Url"} "album3"]]]]]]]
+                   [:a {:href "album3Url"} "(?)album3"]]]]]]]
              [:div.diff-item
               [:details [:summary "both have(0)"] [:ul.albums-list ()]]]]
             [:div.artist
@@ -346,7 +352,7 @@
                 [[:li
                    [:div.album-info
                     [:img {:src "image4Url", :height 120}]
-                    [:a {:href "album4Url"} "album4"]]]]]]]]])))
+                    [:a {:href "album4Url"} "(?)album4"]]]]]]]]])))
   (testing "grouped-artists-list-html groups artists by first letter"
     (with-redefs [artist-list-html identity]
       (is (= (grouped-artists-list-html {"an artist" "an artist description"
