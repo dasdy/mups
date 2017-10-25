@@ -2,8 +2,7 @@
   (:require claudio.id3
             [clojure.java.io :refer [file]]
             [mups.lastfm :refer :all]
-            [clojure.data :refer [diff]]
-            [cheshire.core :refer [generate-string]]))
+            [clojure.data :refer [diff]]))
 
 
 "structure:

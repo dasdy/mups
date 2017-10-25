@@ -1,10 +1,10 @@
 (ns mups.collection
   (:require [cheshire.core :refer :all]))
 
-(defmulti save-collection (fn [type collection path] type))
-(defmulti read-collection (fn [type path] type))
+(defmulti save-collection (fn [type _ _] type))
+(defmulti read-collection (fn [type _] type))
 
-(defmethod save-collection :json [dispatcher collection path]
+(defmethod save-collection :json [_ collection path]
   (let [my-pretty-printer (create-pretty-printer
                            (assoc default-pretty-print-options
                                   :indent-arrays? true))]
@@ -13,5 +13,5 @@
                 {:pretty my-pretty-printer}))
     collection))
 
-(defmethod read-collection :json [dispatcher path]
+(defmethod read-collection :json [_ path]
   (parse-string (slurp path)))

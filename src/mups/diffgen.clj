@@ -1,11 +1,12 @@
 (ns mups.diffgen
-  (:use mups.libscan
-        mups.lastfm)
-  (:require [cheshire.core :refer :all]
+  (:require [cheshire.core :refer [generate-string create-pretty-printer
+                                   default-pretty-print-options]]
+            [mups.libscan :refer [album-title-key]]
+            [mups.lastfm :refer [album-url-key image-url-key]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css]]))
 
-(defmulti save-diff (fn [type collection path] type))
+(defmulti save-diff (fn [type _ _] type))
 
 (defn make-json-diff-string [diff]
   (let [my-pretty-printer (create-pretty-printer
@@ -22,7 +23,7 @@
                 diff))
      {:pretty my-pretty-printer})))
 
-(defmethod save-diff :json [dispatcher diff path]
+(defmethod save-diff :json [_ diff path]
   (spit path (make-json-diff-string diff)))
 
 (defn album-info-html [album-info]
@@ -67,5 +68,5 @@
   (html [:head (include-css "resources/public/css/albums-list.css")
          [:body (grouped-artists-list-html diff)]]))
 
-(defmethod save-diff :html [dispatcher diff path]
+(defmethod save-diff :html [_ diff path]
   (spit path (make-html-diff-string diff)))

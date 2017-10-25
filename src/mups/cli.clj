@@ -1,10 +1,12 @@
 (ns mups.cli
   (:gen-class)
-  (:use mups.core
-        mups.collection
-        mups.diffgen)
   (:require [clojure.tools.cli :refer [parse-opts]]
-            [clojure.java.io :refer [file]]))
+            [clojure.java.io :refer [file]]
+            [mups.core :refer [build-user-collection build-diff
+                               diff-writer collection-reader
+                               collection-writer]]
+            [mups.collection :refer [save-collection read-collection]]
+            [mups.diffgen :refer [save-diff]]))
 
 (def cli-options
   [["-m" "--music-path PATH" "Path to your music library"
@@ -23,7 +25,7 @@
         (:options (parse-opts args cli-options))]
     [music-path cached-path output ignore-path lastfm]))
 
-(defn validate-args [[mpath cachepath _ _ _ :as args]]
+(defn validate-args [[mpath cachepath _ _ _]]
   (if-not (or mpath cachepath)
     (println (str "You must specify at least one of --music-path or --cached-path options"))
     true))
@@ -35,5 +37,5 @@
                            (read-collection collection-reader ignorepath))]
     (when (validate-args parsed-args)
       (let [user-collection (build-user-collection mpath cachepath ignored-stuff)
-            diff (build-diff user-collection ignored-stuff lastfmpath outputpath)]
+            diff (build-diff user-collection ignored-stuff lastfmpath)]
        (save-diff diff-writer diff outputpath)))))

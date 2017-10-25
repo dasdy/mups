@@ -178,7 +178,7 @@
 (deftest serialization-tests
   (testing "save-collection"
     (with-local-vars [ file-buf nil]
-      (with-redefs [spit (fn [path str] (var-set file-buf str))]
+      (with-redefs [spit (fn [_ str] (var-set file-buf str))]
         (do (save-collection :json {"a" {"b" (album-info 1)}} "some-path")
             (is (= @file-buf "{\n  \"a\" : {\n    \"b\" : {\n      \"song-count\" : 1\n    }\n  }\n}"))))))
   (testing "read-collection"
@@ -186,7 +186,7 @@
       (is (= (read-collection :json "a.json")
              {"a" ["b"]}))))
   (testing "saving diff"
-    (with-redefs [spit (fn [path data] data)]
+    (with-redefs [spit (fn [_ data] data)]
       (is (= (save-diff :json {"author" {"you have" [] "you miss" [] "both have" []}} "")
               "{\n  \"author\" : {\n    \"both have\" : [ ],\n    \"you have\" : [ ],\n    \"you miss\" : [ ]\n  }\n}"))
       (is (= (clojure.string/replace

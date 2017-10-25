@@ -1,6 +1,5 @@
 (ns mups.lastfm
-  (:require [clojure.string :as str]
-            [org.httpkit.client :as http]
+  (:require [org.httpkit.client :as http]
             [clojure.java.io :as io]
             [cheshire.core :as json]))
 
@@ -91,17 +90,9 @@
   [lastfm-response]
   (reduce
    (fn [acc x]
-     (let [album-name (.toLowerCase (get x "name"))
-           ;; sometimes author name != the one that was requested,
-           ;; lastfm corrects it and some shit
-           author-name (.toLowerCase (-> x
-                                         (get "artist")
-                                         (get "name")))
-           song-count 1
-           ;; this will be updated in the next step,
-           ;; for now this is 1 to make less requests
-           ]
-       (assoc acc album-name {"song-count" 1
+     (let [album-name (.toLowerCase (get x "name"))]
+       (assoc acc album-name {"song-count" 1 ;; this will be updated in the next step,
+                              ;; for now this is 1 to make less requests
                               "title" (get x "name")})))
    {}
    (get (get lastfm-response "topalbums") "album")))
