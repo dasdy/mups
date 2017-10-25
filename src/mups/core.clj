@@ -6,6 +6,7 @@
                [cheshire.core :refer :all]
                [clojure.java.io :refer [file]]
                [hiccup.core :refer [html]]
+               [hiccup.page :refer [include-css]]
                [swiss.arrows :refer [-<>]]
                [mups.lastfm :as lastfm]))
 
@@ -66,12 +67,13 @@
 
 (defmethod save-diff :html [dispatcher diff path]
   (spit path
-        (html (map (fn [[artist-name diff]]
-                     [:div.artist artist-name
-                      (diff-item-html "you have" (get diff "you have"))
-                      (diff-item-html "you miss" (get diff "you miss"))
-                      (diff-item-html "both have" (get diff "both have"))])
-                   diff))))
+        (html [:head (include-css "resources/public/css/albums-list.css")
+               [:body (map (fn [[artist-name diff]]
+                        [:div.artist artist-name
+                         (diff-item-html "you have" (get diff "you have"))
+                         (diff-item-html "you miss" (get diff "you miss"))
+                         (diff-item-html "both have" (get diff "both have"))])
+                      diff)]])))
 
 (def cli-options
   [["-m" "--music-path PATH" "Path to your music library"
