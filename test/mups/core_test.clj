@@ -8,9 +8,9 @@
 
 (defn album-info [track-count & [album-name]]
   (let [res {"song-count" track-count}]
-        res (if album-name
-                (assoc res "title" album-name)
-                res)))
+    (if album-name
+      (assoc res "title" album-name)
+      res)))
 
 (deftest add-author-info-tests
   (testing "add-author to existing authors"

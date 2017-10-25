@@ -93,7 +93,7 @@
     [music-path cached-path output ignore-path lastfm]))
 
 (defn validate-args [[mpath cachepath _ _ _ :as args]]
-  (if (not (or mpath cachepath))
+  (if-not (or mpath cachepath)
     (println (str "You must specify at least one of --music-path or --cached-path options"))
     true))
 

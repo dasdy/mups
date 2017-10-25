@@ -69,8 +69,8 @@
 (def album-title-key "title")
 
 (defn find-author-missing-albums [local-author-info lastfm-author-info]
-  (let [[user-added missing common] (diff (into #{} (keys local-author-info))
-                                          (into #{} (keys lastfm-author-info)))
+  (let [[user-added missing common] (diff (set (keys local-author-info))
+                                          (set (keys lastfm-author-info)))
         mapper (fn [map] (fn [album-title] (assoc (get map album-title)
                                                 "title" album-title)))]
     {"you have" (if user-added

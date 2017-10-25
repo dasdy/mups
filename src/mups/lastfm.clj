@@ -47,7 +47,7 @@
             (fn [{:keys [body]}]
               (print (str "got response for: " author-name ": " album-name))
               (let [decoded-body (json/parse-string body)]
-                (when (not (is-error-response decoded-body))
+                (when-not (is-error-response decoded-body)
                   (-> decoded-body
                       (get "album")
                       (get "tracks")
@@ -60,7 +60,7 @@
 
 (defn album-response->album-info [body]
   (let [decoded-body (json/parse-string body)]
-    (when (not (is-error-response decoded-body))
+    (when-not (is-error-response decoded-body)
       (let [song-count (-> decoded-body
                             (get "album")
                             (get "tracks")
@@ -94,20 +94,21 @@
 (defn albums-from-lastfm
   "transforming last.fm response into appropriate form"
   [lastfm-response]
-  (->> (get (get lastfm-response "topalbums") "album")
-       (reduce
-        (fn [acc x]
-          (let [album-name (.toLowerCase (get x "name"))
-                author-name ;; sometimes author name != the one that was requested,
-                            ;; lastfm corrects it and some shit
-                (.toLowerCase (-> x
-                                  (get "artist")
-                                  (get "name")))
-                song-count 1]
-            ;; this will be updated in the next step,
-            ;; for now this is 1 to make less requests
-            (assoc acc album-name {"song-count" 1})))
-        {})))
+  (reduce
+   (fn [acc x]
+     (let [album-name (.toLowerCase (get x "name"))
+           ;; sometimes author name != the one that was requested,
+           ;; lastfm corrects it and some shit
+           author-name (.toLowerCase (-> x
+                                         (get "artist")
+                                         (get "name")))
+           song-count 1
+           ;; this will be updated in the next step,
+           ;; for now this is 1 to make less requests
+           ]
+       (assoc acc album-name {"song-count" 1})))
+   {}
+   (get (get lastfm-response "topalbums") "album")))
 
 (defn remove-singles [collection]
   (into {}
@@ -127,13 +128,13 @@
             (fn [{:keys [body]}]
               (println (str "got response for: " author-name))
               (let [decoded-body (json/parse-string body)]
-                (when (not (is-error-response decoded-body))
+                (when-not (is-error-response decoded-body)
                   (albums-from-lastfm decoded-body))))))
 
 (defn author-response->author-info
   [body]
   (let [decoded-body (json/parse-string body)]
-    (when (not (is-error-response decoded-body))
+    (when-not (is-error-response decoded-body)
       (albums-from-lastfm decoded-body))))
 
 (defn get-authors-from-lastfm [collection]
