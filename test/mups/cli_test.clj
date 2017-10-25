@@ -1,4 +1,4 @@
-(ns mups.core-test
+ (ns mups.cli-test
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
             [cheshire.core :refer [generate-string]]
@@ -7,7 +7,8 @@
             [mups.lastfm :refer :all]
             [mups.diffgen :refer :all]
             [mups.collection :refer :all]
-            [mups.cli :refer :all]))
+            [mups.cli :refer :all]
+            ))
 
 (defn album-info [track-count & [album-name]]
   (let [res {"song-count" track-count}]
@@ -165,7 +166,11 @@
     (is (= (remove-singles {"author" {"s" (album-info 1) "s3" nil}
                             "author2" {"x" (album-info 2) "k" (album-info 1)}})
            {"author" {}
-            "author2" {"x" (album-info 2)}}))))
+            "author2" {"x" (album-info 2)}}))
+    (is (= (remove-singles {"author" {"s[single]" (album-info 12) "s3 - single" (album-info 13)}
+                            "author2" {"x (single)" (album-info 2) "k single" (album-info 10)}})
+           {"author" {}
+            "author2" {}}))))
 
 (deftest diff-tests
   (testing "find missing albums in one author"
@@ -359,23 +364,3 @@
                 [["fourth artist" "fourth description"]]]]
               [:div.artist-list
                [:details [:summary "t"] [["third artist" "third description"]]]]])))))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -102,9 +102,8 @@
         (map (fn [[author albums]]
                [author (into {} (filter (fn [[album-name album-info]]
                                           (let [song-count (get album-info song-count-key)]
-                                           (and song-count
-                                            (or (> song-count 1)
-                                                (re-find #"^.*?(single|\[single\]|\(single\))$" album-name)))))
+                                            (and (and song-count (> song-count 1))
+                                                 (not (re-find #"^.*?(single|\[single\]|\(single\))$" album-name)))))
                                         albums))])
              collection)))
 
