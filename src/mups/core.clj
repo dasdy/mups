@@ -21,7 +21,8 @@
       (save-collection collection-writer <> cachepath)))
 
 (defn fetch-details-in-scanned-collection [user-collection ignored-stuff]
-  (-> (get-authors-from-lastfm)
+  (-> user-collection
+      (get-authors-from-lastfm)
       (remove-ignored ignored-stuff)
       (fetch-album-details)))
 
