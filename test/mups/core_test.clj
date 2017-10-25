@@ -177,7 +177,7 @@
     (with-local-vars [ file-buf nil]
       (with-redefs [spit (fn [path str] (var-set file-buf str))]
         (do (save-collection :json {"a" {"b" (album-info 1)}} "some-path")
-            (is (= @file-buf "{\n  \"a\" : [\n    \"b\"\n  ]\n}"))))))
+            (is (= @file-buf "{\n  \"a\" : {\n    \"b\" : {\n      \"song-count\" : 1\n    }\n  }\n}"))))))
   (testing "read-collection"
     (with-redefs [slurp (fn [_] "{\"a\":[\"b\"]}")]
       (is (= (read-collection :json "a.json")
