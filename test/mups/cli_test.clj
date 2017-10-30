@@ -136,11 +136,11 @@
            (parse-prog-options ["--ignore-path=ignore" "--output=out"
                                 "--music-path=music" "--cached-path=cache"
                                 "--lastfm=lastfm"])))
-    (is (= ["music" "cache" "diff.json" "ignore" "lastfm.json"]
+    (is (= ["music" "cache" "diff.html" "ignore" "lastfm-collection.json"]
            (parse-prog-options ["--ignore-path=ignore"
                                 "--music-path=music"
                                 "--cached-path=cache"])))
-    (is (= ["music" "cache.json" "diff.json" nil "lastfm.json"]
+    (is (=  ["music" "cache.json" "diff.html" nil "lastfm-collection.json"]
            (parse-prog-options ["--music-path=music"])))
     (is (validate-args ["music" nil "diff.json" nil nil]))
     (is (validate-args [nil "cache" nil nil nil]))

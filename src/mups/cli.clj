@@ -5,18 +5,18 @@
             [mups.core :refer [build-user-collection build-diff
                                diff-writer collection-reader
                                collection-writer]]
-            [mups.collection :refer [save-collection read-collection]]
+            [mups.collection :refer [save-collection read-collection make-name]]
             [mups.diffgen :refer [save-diff]]))
 
 (def cli-options
   [["-m" "--music-path PATH" "Path to your music library"
     :default nil]
    ["-c" "--cached-path PATH" "Path to collection if you have already scanned library"
-    :default "cache.json"]
+    :default (make-name collection-writer "cache")]
    ["-o" "--output PATH" "Path to output (results of music scan). Should default to path of cached-path or, if not given, to out.json"
-    :default "diff.json"]
+    :default (make-name diff-writer "diff")]
    ["-l" "--lastfm PATH" "Path to Last.fm version of your  library (not removing albums you already have"
-    :default "lastfm.json"]
+    :default (make-name collection-writer "lastfm-collection")]
    ["-i" "--ignore-path PATH" "Path to ignore file"
     :default nil]])
 
