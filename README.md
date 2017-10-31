@@ -8,15 +8,17 @@ App provides CLI to scan your music library, filter unneeded authors and scan fo
 
 ## Usage:
 ### Command-line
-1. Set your environment variable `LASTFM_API` and `LASTFM_PRIVATEKEY`. Alternatively, before deploying, put files `api_key` and `shared_secret` into `resources` folder (near `src` and `test`)
+1. Set your environment variable `LASTFM_API` and `LASTFM_PRIVATEKEY`.
+Alternatively, before deploying, put files `api_key` and `shared_secret` into `resources` folder (near `src` and `test`)
 
 2. When run, you can use following options:
-  * `-m` or `--music-path` - path to your music library
+  * `-m` or `--music-path` - path to your music library. If omitted, the `-c` option must be provided
   * `-c` or `--cached-path` - path to result of previous launch of a program. If used, music-path option can be omitted.
-  * `-o` or `--output` - where to save results of scan. Defaults to `cached-path`. If it is also not given, its `out.json`
+  * `-o` or `--output` - where to save results of scan. Defaults to `cached-path`. If it is also not given, its `diff.html`
   * `-i` or `--ignore-path` - path to file to ignore certain authors or albums
 
-Example : `java -jar mp3-update-scanner --music-path=/home/user/Music --cached-path=prev_results.json`
+Example : `lein run --music-path=/home/user/Music`
+
 
 ### Clojure repl
 Since it is written in clojure, you get the chance to hack around as you wish. Functions that might interest you are:
@@ -35,15 +37,26 @@ only scan your library, without any looking-up from the web. Parameters :
    (build-user-collection "/home/user/Music" "/home/user/Music/lib-cache.json" nil)
 ```
 
-#### Build difference file
+#### Build difference
 ```clojure
-(build-diff user-collection ignored-stuff lastfmpath outputpath)
+(build-diff user-collection ignored-stuff lastfmpath)
 ```
 build difference between user-collection and whatever will be looked up in last.fm . Parameters:
    * `user-collection` result of call of `build-user-collection`
    * `ignored-stuff` - clojure representation of content of ignore-file
    * `lastfmpath` - path to result of lookup of your library in last.fm
-   * `outputpath` - path to save diff results
+
+#### Saving diff
+
+```clojure
+(save-diff diff-writer diff outputpath)
+```
+
+Persist diff onto storage
+
+   * `diff-writer` - either `:html` (default value) or `:json` - for more hackable output
+   * `diff` - diff object, built using `build-diff` function
+   * `outputpath` - path to file, where diff should be serialized
 
 #### Filter unlistened authors
 ```clojure
@@ -59,7 +72,14 @@ a function used by `build-user-collection` to detect whether you really listen t
 
 ### File formats:
 1. Collections (cache of music library, cache of last.fm lookup results) - json file of following format:
+```JSON
+{"author_name": {"album": {"song-count": 10,
+                           "album-url": "/album/url",
+                           "image-url" : "/album/image/url"
+                  }}}
+```
 
+Fields `album-url` and `image-url` are only present for last.fm cache file
 
 2. Ignore file - json file to provide facility of ignoring entire bands, all albums with a certain title, or certain albums of some author:
   ```JSON
@@ -70,11 +90,4 @@ a function used by `build-user-collection` to detect whether you really listen t
   ```
 
 
-3. Diff file - a json map of format:
-  ```JSON
-  { "author" : { "you have": ["album name"],
-                 "you miss" : ["album name"],
-                "both have": ["album name"]
-               }
-  }
-  ```
+3. Diff file - static HTML with artists, grouped by alphabet.
