@@ -48,14 +48,21 @@
    [:details [:summary (str message "(" (count diff-item) ")")]
     (albums-list-html diff-item)]])
 
+(defn artist-name-elem [artist-name diff]
+  (let [actual-artist-name (get diff :artist-name artist-name)]
+   (if-let [artist-url (get diff :artist-url nil)]
+     [:a {:href artist-url} actual-artist-name]
+     actual-artist-name)))
+
 (defn artist-list-html [artist-list]
   (map (fn [[artist-name diff]]
-         [:div.artist artist-name
-          (diff-item-html "you have" (get diff "you have"))
-          (diff-item-html "you miss" (get diff "you miss"))
-          (diff-item-html "both have" (get diff "both have"))])
+         (let [artist-elem (artist-name-elem artist-name diff)]
+          [:div.artist artist-elem
+           (diff-item-html "you have" (get diff "you have"))
+           (diff-item-html "you miss" (get diff "you miss"))
+           (diff-item-html "both have" (get diff "both have"))]))
        (sort-by (fn [[artist-name _]] artist-name)
-                artist-list)))
+                  artist-list)))
 
 (defn grouped-artists-list-html [artist-list]
   (let [groups (group-by (fn [[artist-name _]]

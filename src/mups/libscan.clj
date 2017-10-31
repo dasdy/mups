@@ -4,6 +4,7 @@
             [mups.lastfm :refer :all]
             [clojure.data :refer [diff]]))
 
+(def album-title-key "title")
 
 "structure:
 {
@@ -17,13 +18,20 @@
 }"
 
 (defn add-author-info [mp3-tags collection]
-  (let [artist-name (.toLowerCase (get mp3-tags :artist "Unknown Artist"))
-        album-name (.toLowerCase (get mp3-tags :album "Unknown Album"))
-        artist-info (get collection artist-name {})]
+  (let [base-artist-name (get mp3-tags :artist "Unknown Artist")
+        artist-name (.toLowerCase base-artist-name)
+        base-album-name (get mp3-tags :album "Unknown Album")
+        album-name (.toLowerCase base-album-name)
+        artist-info (get collection
+                         artist-name
+                         {:artist-name base-artist-name})
+        update-func (fn [album-desc]
+                      (if album-desc
+                        (update-in album-desc [song-count-key] inc)
+                        {song-count-key 1
+                         album-title-key base-album-name}))]
     (assoc collection artist-name
-           (update-in artist-info [album-name]
-                      #(if % (update-in % [song-count-key] inc)
-                           {song-count-key 1})))))
+           (update-in artist-info [album-name] update-func))))
 
 (defn author-song-count
   ([author-info]
@@ -64,8 +72,6 @@
 
 (defn only-listened-authors [collection]
   (into {} (filter author-is-listened collection)))
-
-(def album-title-key "title")
 
 (defn find-author-missing-albums [local-author-info lastfm-author-info]
   (let [[user-added missing common] (diff (set (keys local-author-info))

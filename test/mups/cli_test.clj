@@ -40,16 +40,35 @@
   (testing "add-author to non-existing authors"
     (is (= (add-author-info {:artist "artist1" :album "album"}
                             {})
-           {"artist1" {"album" (album-info 1)}}))
+           {"artist1" {"album" (album-info 1 "album")
+                       :artist-name "artist1"}}))
     (is (= (add-author-info {:artist "artist2" :album "album"}
-                            {"artist1" {"album" (album-info 1)}})
-           {"artist1" {"album" (album-info 1)}
-            "artist2" {"album" (album-info 1)}})))
+                            {"artist1" {"album" (album-info 1 "album")
+                                        :artist-name "artist1"}})
+           {"artist1" {"album" (album-info 1 "album")
+                       :artist-name "artist1"}
+            "artist2" {"album" (album-info 1 "album")
+                       :artist-name "artist2"}})))
   (testing "add-author to authors, without albums"
     (is (= (add-author-info {:artist "artist1" :album "album2"}
-                            {"artist1" {"album" (album-info 9)}})
-           {"artist1" {"album" (album-info 9)
-                       "album2" (album-info 1)}}))))
+                            {"artist1" {"album" (album-info 9 "album")
+                                        :artist-name "artist1"}})
+           {"artist1" {"album" (album-info 9 "album")
+                       "album2" (album-info 1 "album2")
+                       :artist-name "artist1"}})))
+  (testing "source name should be saved as attribute, with base case"
+    (is (= (add-author-info {:artist "SoMe ArTiSt" :album "ALbUmInFo"}
+                            {})
+           {"some artist" {"albuminfo" (album-info 1 "ALbUmInFo")
+                           :artist-name "SoMe ArTiSt"}})
+
+        ))
+  (testing "save first name in library during scan"
+    (= (add-author-info {:artist "SoMe ArTiSt" :album "ALbUmInFo"}
+                            {"some artist" {:artist-name "sOmE aRtIsT"
+                                            "albuminfo" (album-info 1 "albumINFO")}})
+           {"artist1" {"album" (album-info 2 "albumINFO")
+                       :artist-name "sOmE aRtIsT"}})))
 
 (deftest author-song-count-tests
   (testing "on empty collection"
@@ -66,14 +85,19 @@
                                {:artist "author" :album "album"}
                                {:artist "author" :album "album2"})
                              {})
-         {"author" {"album" (album-info 1) "album2" (album-info 1)}
-          "author2" {"album" (album-info 1)}}))
+           {"author" {"album" (album-info 1 "album") "album2" (album-info 1 "album2")
+                      :artist-name "author"}
+            "author2" {"album" (album-info 1 "album")
+                       :artist-name "author2"}}))
     (is (= (build-collection '({:artist "author2" :album "album"}
                                {:artist "author" :album "album"}
                                {:artist "author" :album "album2"})
-                             {"author" {"album" (album-info 10)}})
-         {"author" {"album" (album-info 11) "album2" (album-info 1)}
-          "author2" {"album" (album-info 1)}}))))
+                             {"author" {"album" (album-info 10 "album")
+                                        :artist-name "author"}})
+           {"author" {"album" (album-info 11 "album") "album2" (album-info 1 "album2")
+                      :artist-name "author"}
+            "author2" {"album" (album-info 1 "album")
+                       :artist-name "author2"}}))))
 
 (defn file-mock
   "object with getName and getPath properties, same as path"
@@ -353,6 +377,20 @@
                    [:div.album-info
                     [:img {:src "image4Url", :height 120}]
                     [:a {:href "album4Url"} "(?)album4"]]]]]]]]])))
+  (testing "artist-name and artist-url attributes are used to generate html"
+    (is (= (artist-list-html {"aartist" {:artist-name "The Artist"
+                                         :artist-url "artist url"
+                                         "you have" []
+                                         "you miss" []
+                                         "both have" []}})
+           [[:div.artist
+             [:a {:href "artist url"} "The Artist"]
+             [:div.diff-item
+              [:details [:summary "you have(0)"] [:ul.albums-list ()]]]
+             [:div.diff-item
+              [:details [:summary "you miss(0)"] [:ul.albums-list ()]]]
+             [:div.diff-item
+              [:details [:summary "both have(0)"] [:ul.albums-list ()]]]]])))
   (testing "grouped-artists-list-html groups artists by first letter"
     (with-redefs [artist-list-html identity]
       (is (= (grouped-artists-list-html {"an artist" "an artist description"
