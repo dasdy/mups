@@ -88,14 +88,16 @@
 (defn albums-from-lastfm
   "transforming last.fm response into appropriate form"
   [lastfm-response]
+  (let [author-name (get (get (get lastfm-response "topalbums") "@attr") "artist")
+        albums (get (get lastfm-response "topalbums") "album")]
   (reduce
    (fn [acc x]
      (let [album-name (.toLowerCase (get x "name"))]
        (assoc acc album-name {"song-count" 1 ;; this will be updated in the next step,
                               ;; for now this is 1 to make less requests
                               "title" (get x "name")})))
-   {}
-   (get (get lastfm-response "topalbums") "album")))
+   {:artist-name author-name}
+   albums)))
 
 (defn remove-singles [collection]
   (into {}

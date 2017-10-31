@@ -255,8 +255,10 @@
     (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "aLbuM1"
                                                        "artist" {"name" "artist1"}}
                                                       {"name" "aLbuM2"
-                                                       "artist" {"name" "artist1"}}]}})
-           {"album1" (album-info 1 "aLbuM1") "album2" (album-info 1 "aLbuM2")}))
+                                                       "artist" {"name" "artist1"}}]
+                                             "@attr" {"artist" "The artistName"}}})
+           {"album1" (album-info 1 "aLbuM1") "album2" (album-info 1 "aLbuM2")
+           :artist-name "The artistName"}))
     (is (= (album-response->album-info
                (generate-string {"album"
                                    {"name" "someAlbumName"

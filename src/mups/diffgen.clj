@@ -50,7 +50,7 @@
 
 (defn artist-name-elem [artist-name diff]
   (let [actual-artist-name (get diff :artist-name artist-name)]
-   (if-let [artist-url (get diff :artist-url nil)]
+   (if-let [artist-url (get diff :artist-url)]
      [:a {:href artist-url} actual-artist-name]
      actual-artist-name)))
 
