@@ -1,8 +1,6 @@
 (ns mups.diffgen
   (:require [cheshire.core :refer [generate-string create-pretty-printer
                                    default-pretty-print-options]]
-            [mups.libscan :refer [album-title-key]]
-            [mups.lastfm :refer [album-url-key image-url-key song-count-key]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css]]))
 
@@ -30,16 +28,16 @@
   (filter (complement nil?) lst))
 
 (defn album-info-html [album-info]
-  (let [song-count (get album-info song-count-key nil)
-        album-title (get album-info album-title-key)
+  (let [song-count (:song-count album-info nil)
+        album-title (:title album-info)
         album-title-text (if song-count
                            (str "(" song-count ")" album-title)
                            (str "(?)" album-title))
-        image-url (get album-info image-url-key)
+        image-url (:image-url album-info)
         image-item (if image-url
                      [:img {:src image-url :height 120}]
                      nil)
-        album-url (get album-info album-url-key)
+        album-url (:album-url album-info)
         album-item (if album-url
                      [:a {:href album-url} album-title-text]
                      album-title-text)]
@@ -55,8 +53,8 @@
     (albums-list-html diff-item)]])
 
 (defn artist-name-elem [artist-name diff]
-  (let [actual-artist-name (get diff :artist-name artist-name)]
-   (if-let [artist-url (get diff :artist-url)]
+  (let [actual-artist-name (:display-name diff artist-name)]
+   (if-let [artist-url (:artist-url diff)]
      [:a {:href artist-url} actual-artist-name]
      actual-artist-name)))
 

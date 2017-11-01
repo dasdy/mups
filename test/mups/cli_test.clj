@@ -7,77 +7,74 @@
             [mups.lastfm :refer :all]
             [mups.diffgen :refer :all]
             [mups.collection :refer :all]
-            [mups.cli :refer :all]
-            ))
+            [mups.cli :refer :all]))
 
 (defn album-info [track-count & [album-name]]
-  (let [res {"song-count" track-count}]
-    (if album-name
-      (assoc res "title" album-name)
-      res)))
+  (->Album track-count album-name nil nil))
+
+(defn artist-info [albums & [name url]]
+  (->Artist name albums url))
 
 (deftest add-author-info-tests
   (testing "add-author to existing authors"
     (is (= (add-author-info {:artist "artist1" :album "album"}
-                            {"artist1" {"album" (album-info 1)}})
-           {"artist1" {"album" (album-info 2)}}))
+                            {"artist1" (artist-info {"album" (album-info 1)})})
+           {"artist1" (artist-info {"album" (album-info 2)})}))
     (is (= (add-author-info {:artist "artist1" :album "album"}
-                            {"artist1" {"album" (album-info 1)}
-                             "artist2" {"album3" (album-info 6)}
-                             "artist3" {"album4" (album-info 8)}})
-           {"artist1" {"album" (album-info 2)}
-            "artist2" {"album3" (album-info 6)}
-            "artist3" {"album4" (album-info 8)}}))
+                            {"artist1" (artist-info {"album" (album-info 1)})
+                             "artist2" (artist-info {"album3" (album-info 6)})
+                             "artist3" (artist-info {"album4" (album-info 8)})})
+           {"artist1" (artist-info {"album" (album-info 2)})
+            "artist2" (artist-info {"album3" (album-info 6)})
+            "artist3" (artist-info {"album4" (album-info 8)})}
+           ))
     (is (= (add-author-info {:artist "artist1" :album "album2"}
-                            {"artist1" {"album" (album-info 1)
-                                        "album2" (album-info 3)}
-                             "artist2" {"album3" (album-info 6)}
-                             "artist3" {"album4" (album-info 8)}})
-           {"artist1" {"album" (album-info 1)
-                       "album2" (album-info 4)}
-            "artist2" {"album3" (album-info 6)}
-            "artist3" {"album4" (album-info 8)}})))
+                            {"artist1" (artist-info {"album" (album-info 1)
+                                                     "album2" (album-info 3)})
+                             "artist2" (artist-info {"album3" (album-info 6)})
+                             "artist3" (artist-info {"album4" (album-info 8)})})
+           {"artist1" (artist-info {"album" (album-info 1)
+                        "album2" (album-info 4)})
+            "artist2" (artist-info {"album3" (album-info 6)})
+            "artist3" (artist-info {"album4" (album-info 8)})})))
   (testing "add-author to non-existing authors"
     (is (= (add-author-info {:artist "artist1" :album "album"}
                             {})
-           {"artist1" {"album" (album-info 1 "album")
-                       :artist-name "artist1"}}))
+           {"artist1" (artist-info {"album" (album-info 1 "album")}
+                                   "artist1")}))
     (is (= (add-author-info {:artist "artist2" :album "album"}
-                            {"artist1" {"album" (album-info 1 "album")
-                                        :artist-name "artist1"}})
-           {"artist1" {"album" (album-info 1 "album")
-                       :artist-name "artist1"}
-            "artist2" {"album" (album-info 1 "album")
-                       :artist-name "artist2"}})))
+                            {"artist1" (artist-info
+                                        {"album" (album-info 1 "album")}
+                                        "artist1")})
+           {"artist1" (artist-info {"album" (album-info 1 "album")} "artist1")
+            "artist2" (artist-info {"album" (album-info 1 "album")} "artist2")})))
   (testing "add-author to authors, without albums"
     (is (= (add-author-info {:artist "artist1" :album "album2"}
-                            {"artist1" {"album" (album-info 9 "album")
-                                        :artist-name "artist1"}})
-           {"artist1" {"album" (album-info 9 "album")
-                       "album2" (album-info 1 "album2")
-                       :artist-name "artist1"}})))
+                            {"artist1" {:albums {"album" (album-info 9 "album")}
+                                        :display-name "artist1"}})
+           {"artist1" {:albums {"album" (album-info 9 "album")
+                                "album2" (album-info 1 "album2")}
+                       :display-name "artist1"}})))
   (testing "source name should be saved as attribute, with base case"
     (is (= (add-author-info {:artist "SoMe ArTiSt" :album "ALbUmInFo"}
                             {})
-           {"some artist" {"albuminfo" (album-info 1 "ALbUmInFo")
-                           :artist-name "SoMe ArTiSt"}})
-
-        ))
+           {"some artist" (artist-info {"albuminfo" (album-info 1 "ALbUmInFo")}  "SoMe ArTiSt")})))
   (testing "save first name in library during scan"
     (= (add-author-info {:artist "SoMe ArTiSt" :album "ALbUmInFo"}
-                            {"some artist" {:artist-name "sOmE aRtIsT"
-                                            "albuminfo" (album-info 1 "albumINFO")}})
-           {"artist1" {"album" (album-info 2 "albumINFO")
-                       :artist-name "sOmE aRtIsT"}})))
+                        {"some artist" (artist-info 
+                                        {"albuminfo" (album-info 1 "albumINFO")}
+                                        "sOmE aRtIsT")})
+       {"artist1" {:albums {"album" (album-info 2 "albumINFO")}
+                   :display-name "sOmE aRtIsT"}})))
 
 (deftest author-song-count-tests
   (testing "on empty collection"
     (is (= 0 (author-song-count {} "author")))
     (is (= 0 (author-song-count {"author2" {"album2" (album-info 5)}} "author"))))
   (testing "count tests"
-    (is (= 5 (author-song-count {"author" {"album1" (album-info 5)}} "author")))
-    (is (= 5 (author-song-count {"author" {"album1" (album-info 2)
-                                           "album2" (album-info 3)}} "author")))))
+    (is (= 5 (author-song-count {"author" (artist-info {"album1" (album-info 5)})} "author")))
+    (is (= 5 (author-song-count {"author" (artist-info {"album1" (album-info 2)
+                                            "album2" (album-info 3)})} "author")))))
 
 (deftest build-collection-tests
   (testing "building collection of mp3 info data"
@@ -85,19 +82,19 @@
                                {:artist "author" :album "album"}
                                {:artist "author" :album "album2"})
                              {})
-           {"author" {"album" (album-info 1 "album") "album2" (album-info 1 "album2")
-                      :artist-name "author"}
-            "author2" {"album" (album-info 1 "album")
-                       :artist-name "author2"}}))
+           {"author" (artist-info {"album" (album-info 1 "album") "album2" (album-info 1 "album2")}
+                                  "author")
+            "author2" (artist-info {"album" (album-info 1 "album")}
+                                   "author2")}))
     (is (= (build-collection '({:artist "author2" :album "album"}
                                {:artist "author" :album "album"}
                                {:artist "author" :album "album2"})
-                             {"author" {"album" (album-info 10 "album")
-                                        :artist-name "author"}})
-           {"author" {"album" (album-info 11 "album") "album2" (album-info 1 "album2")
-                      :artist-name "author"}
-            "author2" {"album" (album-info 1 "album")
-                       :artist-name "author2"}}))))
+                             {"author" (artist-info {"album" (album-info 10 "album")}
+                                                    "author")})
+           {"author" (artist-info {"album" (album-info 11 "album") "album2" (album-info 1 "album2")}
+                                  "author")
+            "author2" (artist-info {"album" (album-info 1 "album")}
+                                   "author2")}))))
 
 (defn file-mock
   "object with getName and getPath properties, same as path"
@@ -123,36 +120,46 @@
 
 (deftest author-is-listened-tests
   (testing "is-listened?"
-    (is (author-is-listened ["author" {"a" (album-info 5) "b" (album-info 9)}]))
-    (is (not (author-is-listened ["author" {"a" (album-info 5)}])))
-    (is (author-is-listened ["author" {"a" (album-info 1)
+    (is (author-is-listened ["author" (artist-info {"a" (album-info 5) "b" (album-info 9)})]))
+    (is (not (author-is-listened ["author" (artist-info {"a" (album-info 5)})])))
+    (is (author-is-listened ["author" (artist-info {"a" (album-info 1)
                                         "b" (album-info 1)
                                         "c" (album-info 1)
-                                         "d" (album-info 1)
-                                         "e" (album-info 1)
-                                         "f" (album-info 1)}]))
-    (is (not (author-is-listened ["author" {"a" (album-info 1)
-                                            "b" (album-info 2)
-                                            "c" (album-info 2)}]))))
+                                        "d" (album-info 1)
+                                        "e" (album-info 1)
+                                        "f" (album-info 1)})]))
+    (is (not (author-is-listened ["author"
+                                  {:albums
+                                   {"a" (album-info 1)
+                                    "b" (album-info 2)
+                                    "c" (album-info 2)}}]))))
   (testing "same thing on a list"
-    (is (= {"author1" {"a" (album-info 5) "b" (album-info 9)}
-            "author3" {"a" (album-info 1)
-                       "b" (album-info 1)
-                       "c" (album-info 1)
-                       "d" (album-info 1)
-                       "e" (album-info 1)
-                       "f" (album-info 2)}}
-           (only-listened-authors {"author1" {"a" (album-info 5) "b" (album-info 9)}
-                                   "author2" {"a" (album-info 5)}
-                                   "author3" {"a" (album-info 1)
-                                              "b" (album-info 1)
-                                              "c" (album-info 1)
-                                              "d" (album-info 1)
-                                              "e" (album-info 1)
-                                              "f" (album-info 2)}
-                                   "author4" {"a" (album-info 1)
-                                              "b" (album-info 2)
-                                              "c" (album-info 1)}})))))
+    (is (= {"author1" {:albums
+                       {"a" (album-info 5)
+                        "b" (album-info 9)}}
+            "author3"
+            {:albums
+             {"a" (album-info 1)
+              "b" (album-info 1)
+              "c" (album-info 1)
+              "d" (album-info 1)
+              "e" (album-info 1)
+              "f" (album-info 2)}}}
+           (only-listened-authors {"author1" {:albums
+                                              {"a" (album-info 5)
+                                               "b" (album-info 9)}}
+                                   "author2" {:albums {"a" (album-info 5)}}
+                                   "author3" {:albums
+                                              {"a" (album-info 1)
+                                               "b" (album-info 1)
+                                               "c" (album-info 1)
+                                               "d" (album-info 1)
+                                               "e" (album-info 1)
+                                               "f" (album-info 2)}}
+                                   "author4" {:albums
+                                              {"a" (album-info 1)
+                                               "b" (album-info 2)
+                                               "c" (album-info 1)}}})))))
 
 (deftest cli-args-tests
   (testing "cli-args-values"
@@ -198,18 +205,20 @@
 
 (deftest diff-tests
   (testing "find missing albums in one author"
-    (is (= (find-author-missing-albums {"a" (album-info 1) "b" (album-info 1)}
-                                       {"a" (album-info 1) "b" (album-info 1) "c" (album-info 1)})
-           {"you have" {},
-            "you miss" [(album-info 1 "c")],
-            "both have" [(album-info 1 "a") (album-info 1 "b")]}))))
+    (is (= (find-author-missing-albums (artist-info {"a" (album-info 1) "b" (album-info 1)})
+                                       (artist-info {"a" (album-info 1) "b" (album-info 1) "c" (album-info 1)}))
+           (->DiffItem nil
+                       [(album-info 1 "a") (album-info 1 "b")]
+                       []
+                       [(album-info 1 "c")])))))
 
 (deftest serialization-tests
   (testing "save-collection"
     (with-local-vars [ file-buf nil]
       (with-redefs [spit (fn [_ str] (var-set file-buf str))]
         (do (save-collection :json {"a" {"b" (album-info 1)}} "some-path")
-            (is (= @file-buf "{\n  \"a\" : {\n    \"b\" : {\n      \"song-count\" : 1\n    }\n  }\n}"))))))
+            (is (= @file-buf
+                   "{\n  \"a\" : {\n    \"b\" : {\n      \"song-count\" : 1,\n      \"title\" : null,\n      \"image-url\" : null,\n      \"album-url\" : null\n    }\n  }\n}"))))))
   (testing "read-collection"
     (with-redefs [slurp (fn [_] "{\"a\":[\"b\"]}")]
       (is (= (read-collection :json "a.json")
@@ -226,7 +235,7 @@
                            "")
                               #"\s"
                               "")
-       "{\"author\":{\"bothhave\":[],\"youhave\":[{\"song-count\":1,\"title\":\"a\"},{\"song-count\":4,\"title\":\"b\"}],\"youmiss\":[]}}")))))
+       "{\"author\":{\"bothhave\":[],\"youhave\":[{\"song-count\":4,\"title\":\"b\",\"image-url\":null,\"album-url\":null},{\"song-count\":1,\"title\":\"a\",\"image-url\":null,\"album-url\":null}],\"youmiss\":[]}}")))))
 
 (deftest get-author-from-lastfm-tests
   (testing "request-test")
@@ -257,8 +266,8 @@
                                                       {"name" "aLbuM2"
                                                        "artist" {"name" "artist1"}}]
                                              "@attr" {"artist" "The artistName"}}})
-           {"album1" (album-info 1 "aLbuM1") "album2" (album-info 1 "aLbuM2")
-           :artist-name "The artistName"}))
+           (artist-info {"album1" (album-info 1 "aLbuM1") "album2" (album-info 1 "aLbuM2")}
+                        "The artistName")))
     (is (= (album-response->album-info
                (generate-string {"album"
                                    {"name" "someAlbumName"
@@ -268,7 +277,7 @@
                                              {"#text" "largeAlbumUrl" "size" "large"}]
                                     "tracks" {"track" [1 2 3 4 5 6]}}}))
 
-             {"song-count" 6 "image-url" "largeAlbumUrl" "album-url" "AlbumUrl"})))
+           (->Album 6 "someAlbumName" "largeAlbumUrl" "AlbumUrl"))))
   (testing "is-error-response"
     (is (is-error-response {"error" 15 "message" "some error message"}))
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}
@@ -276,31 +285,19 @@
 
 (deftest html-diff-generation
   (testing "album-info creates correct hiccup structure"
-    (is (= (album-info-html {"title" "someAlbumName"
-                             "album-url" "albumUrl"
-                             "song-count" 12
-                             "image-url" "imageUrl"})
+    (is (= (album-info-html (->Album 12 "someAlbumName" "imageUrl" "albumUrl"))
            [:div.album-info
             [:img {:src "imageUrl" :height 120}]
             [:a {:href "albumUrl"} "(12)someAlbumName"]]))
-    (is (= (album-info-html {"title" "someAlbumName"
-                             "song-count" 12})
+    (is (= (album-info-html (album-info 12 "someAlbumName"))
            [:div.album-info "(12)someAlbumName"]))
-    (is (= (album-info-html {"title" "someAlbumName"
-                             "album-url" "albumUrl"
-                             "image-url" "imageUrl"})
+    (is (= (album-info-html (->Album nil "someAlbumName" "imageUrl" "albumUrl"))
            [:div.album-info
             [:img {:src "imageUrl" :height 120}]
             [:a {:href "albumUrl"} "(?)someAlbumName"]])))
   (testing "albums-list-html creates unordered list"
-    (is (= (albums-list-html [{"title" "album1"
-                                "album-url" "album1Url"
-                                "song-count" 12
-                               "image-url" "image1Url"}
-                              {"title" "album2"
-                               "album-url" "album2Url"
-                                "song-count" 12
-                               "image-url" "image2Url"}])
+    (is (= (albums-list-html [(->Album 12 "album1" "image1Url" "album1Url")
+                              (->Album 12 "album2" "image2Url" "album2Url")])
            [:ul.albums-list
             [[:li
                [:div.album-info
@@ -311,10 +308,7 @@
                [:img {:src "image2Url" :height 120}]
                [:a {:href "album2Url"} "(12)album2"]]]]])))
   (testing "diff-item-html creates summary tag"
-    (is (= (diff-item-html "message" [{"title" "album1"
-                                        "album-url" "album1Url"
-                                        "song-count" 12
-                                        "image-url" "image1Url"}])
+    (is (= (diff-item-html "message" [(->Album 12 "album1" "image1Url" "album1Url")])
            [:div.diff-item
             [:details
              [:summary "message(1)"]
@@ -324,21 +318,13 @@
                  [:img {:src "image1Url" :height 120}]
                  [:a {:href "album1Url"} "(12)album1"]]]]]]])))
   (testing "artist-list-html creates diff with 3 sub-lists"
-    (is (= (artist-list-html {"aartist" {"you have" [{"title" "album1"
-                                                      "album-url" "album1Url"
-                                                      "image-url" "image1Url"}]
-                                         "you miss" [{"title" "album2"
-                                                      "album-url" "album2Url"
-                                                      "image-url" "image2Url"}
-                                                     {"title" "album3"
-                                                      "album-url" "album3Url"
-                                                      "image-url" "image3Url"}]
+    (is (= (artist-list-html {"aartist" {"you have" [(->Album nil "album1" "image1Url" "album1Url")]
+                                         "you miss" [(->Album nil "album2" "image2Url" "album2Url")
+                                                     (->Album nil "album3" "image3Url" "album3Url")]
                                          "both have" []}
                               "bartist" {"you have" []
                                          "you miss" []
-                                         "both have" [{"title" "album4"
-                                                      "album-url" "album4Url"
-                                                       "image-url" "image4Url"}]}})
+                                         "both have" [(->Album nil "album4" "image4Url" "album4Url")]}})
            [[:div.artist
              "aartist"
              [:div.diff-item
@@ -377,8 +363,8 @@
                    [:div.album-info
                     [:img {:src "image4Url", :height 120}]
                     [:a {:href "album4Url"} "(?)album4"]]]]]]]]])))
-  (testing "artist-name and artist-url attributes are used to generate html"
-    (is (= (artist-list-html {"aartist" {:artist-name "The Artist"
+  (testing "display-name and artist-url attributes are used to generate html"
+    (is (= (artist-list-html {"aartist" {:display-name "The Artist"
                                          :artist-url "artist url"
                                          "you have" []
                                          "you miss" []

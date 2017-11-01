@@ -1,7 +1,8 @@
 (ns mups.lastfm
   (:require [org.httpkit.client :as http]
             [clojure.java.io :as io]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [mups.libscan :refer [->Artist ->Album]]))
 
 (def http-client-parameters
   {:user-agent "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0"})
@@ -41,10 +42,6 @@
 (defn is-error-response [body]
   (not (nil? (get body "error"))))
 
-(def song-count-key "song-count")
-(def image-url-key "image-url")
-(def album-url-key "album-url")
-
 (defn album-response->album-info
   "transform body of last.fm album.getInfo http response into detailed album representation, for example
     {\"song-count\" 15
@@ -58,6 +55,9 @@
                             (get "tracks")
                             (get "track")
                             (count))
+            album-name (-> decoded-body
+                           (get "album")
+                           (get "name"))
             url (-> decoded-body
                     (get "album")
                     (get "url"))
@@ -65,10 +65,11 @@
                           (get "album")
                           (get "image"))
             image-url (and images
-                        (get (last images) "#text"))]
-        {song-count-key song-count
-         image-url-key image-url
-         album-url-key url}))))
+                           (get (last images) "#text"))]
+        (->Album song-count
+                 album-name
+                 image-url
+                 url)))))
 
 (defn fetch-album-details
   "load album details for all authors in collections from last.fm"
@@ -89,21 +90,25 @@
   "transforming last.fm response into appropriate form"
   [lastfm-response]
   (let [author-name (get (get (get lastfm-response "topalbums") "@attr") "artist")
-        albums (get (get lastfm-response "topalbums") "album")]
-  (reduce
-   (fn [acc x]
-     (let [album-name (.toLowerCase (get x "name"))]
-       (assoc acc album-name {"song-count" 1 ;; this will be updated in the next step,
-                              ;; for now this is 1 to make less requests
-                              "title" (get x "name")})))
-   {:artist-name author-name}
-   albums)))
+        albums (get (get lastfm-response "topalbums") "album")
+        album-items (into {}
+                          (map
+                           (fn [x]
+                             (let [album-name (get x "name")]
+                               [(.toLowerCase album-name)
+                                (->Album 1 ;; this will be updated in the next step,
+                                         ;; for now this is 1 to make less requests
+                                         album-name
+                                         nil
+                                         nil)]))
+                           albums))]
+    (->Artist author-name album-items nil)))
 
 (defn remove-singles [collection]
   (into {}
         (map (fn [[author albums]]
                [author (into {} (filter (fn [[album-name album-info]]
-                                          (let [song-count (get album-info song-count-key)]
+                                          (let [song-count (:song-count album-info)]
                                             (and (and song-count (> song-count 1))
                                                  (not (re-find #"^.*?(single|\[single\]|\(single\))$" album-name)))))
                                         albums))])
