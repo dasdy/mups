@@ -26,18 +26,24 @@
 (defmethod save-diff :json [_ diff path]
   (spit path (make-json-diff-string diff)))
 
+(defn remove-nil [lst]
+  (filter (complement nil?) lst))
+
 (defn album-info-html [album-info]
   (let [song-count (get album-info song-count-key nil)
         album-title (get album-info album-title-key)
         album-title-text (if song-count
                            (str "(" song-count ")" album-title)
-                           (str "(?)" album-title))]
-   [:div.album-info
-    [:img {:src (get album-info image-url-key "")
-           :height 120}]
-    (if-let [album-url (get album-info album-url-key)]
-      [:a {:href album-url} album-title-text]
-      album-title-text)]))
+                           (str "(?)" album-title))
+        image-url (get album-info image-url-key)
+        image-item (if image-url
+                     [:img {:src image-url :height 120}]
+                     nil)
+        album-url (get album-info album-url-key)
+        album-item (if album-url
+                     [:a {:href album-url} album-title-text]
+                     album-title-text)]
+    (remove-nil [:div.album-info image-item album-item])))
 
 (defn albums-list-html [albums]
   (let [album-htmls (map (fn [album] [:li (album-info-html album)]) albums)]

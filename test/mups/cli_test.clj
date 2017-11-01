@@ -285,9 +285,7 @@
             [:a {:href "albumUrl"} "(12)someAlbumName"]]))
     (is (= (album-info-html {"title" "someAlbumName"
                              "song-count" 12})
-           [:div.album-info
-            [:img {:src "", :height 120}]
-            "(12)someAlbumName"]))
+           [:div.album-info "(12)someAlbumName"]))
     (is (= (album-info-html {"title" "someAlbumName"
                              "album-url" "albumUrl"
                              "image-url" "imageUrl"})
