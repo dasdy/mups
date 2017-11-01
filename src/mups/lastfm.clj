@@ -75,15 +75,17 @@
   "load album details for all authors in collections from last.fm"
   [collection]
   (into {}
-        (map (fn [[author albums]]
-               (let [albums (keys albums)
+        (map (fn [[author author-info]]
+               (let [albums (keys (:albums author-info))
                      urls (map #(lastfm-get-detailed-album author %)
                                albums)
                      bodies (concur-get urls)]
                  (println "fetching detailed info for author: " author)
-                 [author (into {}
-                               (map (fn [album body] [album (album-response->album-info body)])
-                                    albums bodies))]))
+                 [author (assoc author-info
+                                :albums
+                                (into {}
+                                      (map (fn [album body] [album (album-response->album-info body)])
+                                           albums bodies)))]))
              collection)))
 
 (defn albums-from-lastfm
@@ -105,14 +107,17 @@
     (->Artist author-name album-items nil)))
 
 (defn remove-singles [collection]
-  (into {}
-        (map (fn [[author albums]]
-               [author (into {} (filter (fn [[album-name album-info]]
-                                          (let [song-count (:song-count album-info)]
-                                            (and (and song-count (> song-count 1))
-                                                 (not (re-find #"^.*?(single|\[single\]|\(single\))$" album-name)))))
-                                        albums))])
-             collection)))
+  (let [album-is-single (fn [[album-name album-info]]
+                          (let [song-count (:song-count album-info)]
+                            (and (and song-count (> song-count 1))
+                                 (not (re-find #"^.*?(single|\[single\]|\(single\))$" album-name)))))
+        new-coll (map (fn [[author author-info]]
+                        (let [albums (:albums author-info)
+                              new-albums (filter album-is-single albums)
+                              new-albums-map (into {} new-albums)]
+                          [author (assoc author-info :albums new-albums-map)]))
+                      collection)]
+    (into {} new-coll)))
 
 (defn author-response->author-info
   "transform body of last.fm artist.getInfo http response into basic artist representation, for example
@@ -131,6 +136,8 @@
   (let [authors (keys collection)
         urls (map lastfm-getalbums-url authors)
         bodies (concur-get urls)]
-    (into {} (map (fn [author body]
-                    [author (author-response->author-info body)])
-                  authors bodies))))
+    (let [vals (map (fn [author body]
+                    (let [author-info (author-response->author-info body)]
+                      [author author-info]))
+                    authors bodies)]
+      (into {} vals))))

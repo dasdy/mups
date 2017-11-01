@@ -179,35 +179,36 @@
 
 (deftest ignore-tests
   (testing "ignore-test"
-    (is (= (remove-ignored {"author" {"album1" (album-info 1)
-                                      "album2" (album-info 1)
-                                      "album3" (album-info 3)
-                                      "album4" (album-info 4)}
-                            "author2" {"album1" (album-info 2)
-                                       "album4" (album-info 5)}}
+    (is (= (remove-ignored {"author" (artist-info {"album1" (album-info 1)
+                                                   "album2" (album-info 1)
+                                                   "album3" (album-info 3)
+                                                   "album4" (album-info 4)})
+                            "author2" (artist-info {"album1" (album-info 2)
+                                                    "album4" (album-info 5)})}
                            {"authors" ["author2"]
                             "albums" ["album1" "album3"]
                             "author_albums" {"author" ["album2"]}})
-           {"author" {"album4" (album-info 4)}}))
-    (is (= (remove-singles {"author" {"s" (album-info 1) "s3" (album-info 2)}
-                            "author2" {"x" (album-info 2) "k" (album-info 1)}})
-           {"author" {"s3" (album-info 2)}
-            "author2" {"x" (album-info 2)}}))
+           {"author" (artist-info {"album4" (album-info 4)})}))
+    (is (= (remove-singles {"author" (artist-info {"s" (album-info 1) "s3" (album-info 2)})
+                            "author2" (artist-info {"x" (album-info 2) "k" (album-info 1)})})
+           {"author" (artist-info {"s3" (album-info 2)})
+            "author2" (artist-info {"x" (album-info 2)})}))
 
-    (is (= (remove-singles {"author" {"s" (album-info 1) "s3" nil}
-                            "author2" {"x" (album-info 2) "k" (album-info 1)}})
-           {"author" {}
-            "author2" {"x" (album-info 2)}}))
-    (is (= (remove-singles {"author" {"s[single]" (album-info 12) "s3 - single" (album-info 13)}
-                            "author2" {"x (single)" (album-info 2) "k single" (album-info 10)}})
-           {"author" {}
-            "author2" {}}))))
+    (is (= (remove-singles {"author" (artist-info {"s" (album-info 1) "s3" nil})
+                            "author2" (artist-info {"x" (album-info 2) "k" (album-info 1)})})
+           {"author" (artist-info {})
+            "author2" (artist-info {"x" (album-info 2)})}))
+    (is (= (remove-singles {"author" (artist-info {"s[single]" (album-info 12) "s3 - single" (album-info 13)})
+                            "author2" (artist-info {"x (single)" (album-info 2) "k single" (album-info 10)})})
+           {"author" (artist-info {})
+            "author2" (artist-info {})}))))
 
 (deftest diff-tests
   (testing "find missing albums in one author"
-    (is (= (find-author-missing-albums (artist-info {"a" (album-info 1) "b" (album-info 1)})
-                                       (artist-info {"a" (album-info 1) "b" (album-info 1) "c" (album-info 1)}))
-           (->DiffItem nil
+    (is (= (find-author-missing-albums (artist-info {"a" (album-info 1 "a") "b" (album-info 1 "b")} "artist")
+                                       (artist-info {"a" (album-info 1 "a") "b" (album-info 1 "b") "c" (album-info 1 "c")}
+                                                    "artist"))
+           (->DiffItem "artist"
                        [(album-info 1 "a") (album-info 1 "b")]
                        []
                        [(album-info 1 "c")])))))
@@ -318,13 +319,15 @@
                  [:img {:src "image1Url" :height 120}]
                  [:a {:href "album1Url"} "(12)album1"]]]]]]])))
   (testing "artist-list-html creates diff with 3 sub-lists"
-    (is (= (artist-list-html {"aartist" {"you have" [(->Album nil "album1" "image1Url" "album1Url")]
-                                         "you miss" [(->Album nil "album2" "image2Url" "album2Url")
-                                                     (->Album nil "album3" "image3Url" "album3Url")]
-                                         "both have" []}
-                              "bartist" {"you have" []
-                                         "you miss" []
-                                         "both have" [(->Album nil "album4" "image4Url" "album4Url")]}})
+    (is (= (artist-list-html {"aartist" (->DiffItem "aartist"
+                                                    []
+                                                    [(->Album nil "album1" "image1Url" "album1Url")]
+                                                    [(->Album nil "album2" "image2Url" "album2Url")
+                                                     (->Album nil "album3" "image3Url" "album3Url")])
+                              "bartist" (->DiffItem "bartist"
+                                                    [(->Album nil "album4" "image4Url" "album4Url")]
+                                                    []
+                                                    [])})
            [[:div.artist
              "aartist"
              [:div.diff-item

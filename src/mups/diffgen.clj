@@ -25,7 +25,7 @@
   (spit path (make-json-diff-string diff)))
 
 (defn remove-nil [lst]
-  (filter (complement nil?) lst))
+  (vec (filter (complement nil?) lst)))
 
 (defn album-info-html [album-info]
   (let [song-count (:song-count album-info nil)
@@ -62,9 +62,9 @@
   (map (fn [[artist-name diff]]
          (let [artist-elem (artist-name-elem artist-name diff)]
           [:div.artist artist-elem
-           (diff-item-html "you have" (get diff "you have"))
-           (diff-item-html "you miss" (get diff "you miss"))
-           (diff-item-html "both have" (get diff "both have"))]))
+           (diff-item-html "you have" (:user-albums diff))
+           (diff-item-html "you miss" (:missing-albums diff))
+           (diff-item-html "both have" (:common-albums diff))]))
        (sort-by (fn [[artist-name _]] artist-name)
                   artist-list)))
 

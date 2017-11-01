@@ -1,7 +1,8 @@
 (ns mups.libscan
   (:require claudio.id3
             [clojure.java.io :refer [file]]
-            [clojure.data :refer [diff]]))
+            [clojure.data :refer [diff]]
+            [cheshire.core :refer :all]))
 
 (defrecord Album [song-count title image-url album-url])
 (defrecord Artist [display-name albums url])
@@ -67,17 +68,14 @@
 (defn find-author-missing-albums [local-author-info lastfm-author-info]
   (let [[user-added missing common] (diff (set (keys (:albums local-author-info)))
                                           (set (keys (:albums lastfm-author-info))))
-        mapper (fn [map]
+        mapper (fn [albums-map]
                  "since diff is splitting collections by key, three collections are
                   just sets of album names. This is a function generator that associates
                   actual albums with keys from diff resultsets."
-                 (fn [album-title]
-                   (assoc (get map album-title)
-                          :title
-                          album-title)))
-        map-not-nil (fn [author-info collection]
-                      (if collection
-                        (map (mapper (:albums author-info)) collection)
+                 (fn [album-title] (get albums-map album-title)))
+        map-not-nil (fn [author-info album-titles]
+                      (if album-titles
+                        (map (mapper (:albums author-info)) album-titles)
                         []))]
     (->DiffItem (:display-name local-author-info)
                 (map-not-nil lastfm-author-info common)
@@ -101,7 +99,9 @@
       (->> authors
            (apply dissoc collection)
            (map (fn [[k v]]
-                  (let [removed-globals (apply dissoc v albums)]
-                    {k (apply dissoc removed-globals (get author_albums k))})))
+                  (let [current-albums (:albums v)
+                        removed-globals (apply dissoc current-albums albums)
+                        removed-author-albums (apply dissoc removed-globals (get author_albums k))]
+                    [k (assoc v :albums removed-author-albums)])))
            (into {})))
     collection))
