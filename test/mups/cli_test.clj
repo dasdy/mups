@@ -60,12 +60,12 @@
                             {})
            {"some artist" (artist-info {"albuminfo" (album-info 1 "ALbUmInFo")}  "SoMe ArTiSt")})))
   (testing "save first name in library during scan"
-    (= (add-author-info {:artist "SoMe ArTiSt" :album "ALbUmInFo"}
-                        {"some artist" (artist-info 
-                                        {"albuminfo" (album-info 1 "albumINFO")}
-                                        "sOmE aRtIsT")})
-       {"artist1" {:albums {"album" (album-info 2 "albumINFO")}
-                   :display-name "sOmE aRtIsT"}})))
+    (is (= (add-author-info {:artist "SoMe ArTiSt" :album "ALbUmInFo"}
+                         {"some artist" (artist-info 
+                                         {"albuminfo" (album-info 1 "albumINFO")}
+                                         "sOmE aRtIsT")})
+           {"some artist" (artist-info {"albuminfo" (album-info 2 "albumINFO")}
+                                   "sOmE aRtIsT")}))))
 
 (deftest author-song-count-tests
   (testing "on empty collection"
