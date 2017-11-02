@@ -7,7 +7,8 @@
             [mups.lastfm :refer :all]
             [mups.diffgen :refer :all]
             [mups.collection :refer :all]
-            [mups.cli :refer :all]))
+            [mups.cli :refer :all]
+            [mups.data :refer :all]))
 
 (defn album-info [track-count & [album-name]]
   (->Album track-count album-name nil nil))

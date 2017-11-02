@@ -2,11 +2,9 @@
   (:require claudio.id3
             [clojure.java.io :refer [file]]
             [clojure.data :refer [diff]]
+            [mups.utils :refer [map-into-table]]
+            [mups.data :refer [->Album ->Artist ->DiffItem]]
             [cheshire.core :refer :all]))
-
-(defrecord Album [song-count title image-url album-url])
-(defrecord Artist [display-name albums url])
-(defrecord DiffItem [artist-name common-albums user-albums missing-albums])
 
 (defn add-author-info [mp3-tags collection]
   (let [base-artist-name (get mp3-tags :artist "Unknown Artist")
@@ -83,25 +81,26 @@
                 (map-not-nil lastfm-author-info missing))))
 
 (defn diff-collections [lastfm-collection user-collection]
-  (into {} (map (fn [author]
-                  (let [local-author-info (get user-collection author)
-                        lastfm-author-info (get lastfm-collection author)]
-                    [author (find-author-missing-albums
-                             local-author-info
-                             lastfm-author-info)]))
-                (keys user-collection))))
+  (map-into-table
+   (fn [author]
+     (let [local-author-info (get user-collection author)
+           lastfm-author-info (get lastfm-collection author)]
+       [author (find-author-missing-albums
+                local-author-info
+                lastfm-author-info)]))
+   (keys user-collection)))
 
 (defn remove-ignored [collection ignore-collection]
   (if ignore-collection
     (let [authors (get ignore-collection "authors")
           albums (get ignore-collection "albums")
-          author_albums (get ignore-collection "author_albums")]
-      (->> authors
-           (apply dissoc collection)
-           (map (fn [[k v]]
-                  (let [current-albums (:albums v)
-                        removed-globals (apply dissoc current-albums albums)
-                        removed-author-albums (apply dissoc removed-globals (get author_albums k))]
-                    [k (assoc v :albums removed-author-albums)])))
-           (into {})))
+          author_albums (get ignore-collection "author_albums")
+          collection-without-ignored-authors (apply dissoc collection authors)]
+      (map-into-table
+       (fn [[k v]]
+         (let [current-albums (:albums v)
+               removed-globals (apply dissoc current-albums albums)
+               removed-author-albums (apply dissoc removed-globals (get author_albums k))]
+           [k (assoc v :albums removed-author-albums)]))
+       collection-without-ignored-authors))
     collection))
