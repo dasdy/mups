@@ -284,6 +284,51 @@
     (is (not (is-error-response {"topalbums" {"album" [{"name" "album1"}
                                                        {"name" "album2"}]}})))))
 
+(deftest fetch-album-details-test
+  (testing "fetch-album-returns-map-from-responses"
+    (with-redefs [api-key "some-api-key"
+                  concur-get (fn [urls] (map (constantly
+                                             (generate-string {"album"
+                                                               {"name" "someAlbumName"
+                                                                "artist" "someArtistName"
+                                                                "url" "AlbumUrl"
+                                                                "image" [{"#text" "smallAlbumUrl" "size" "small"}
+                                                                         {"#text" "largeAlbumUrl" "size" "large"}]
+                                                                "tracks" {"track" [1 2 3 4 5 6]}}}))
+                                            urls))]
+      (is (= (fetch-album-details {"author" (artist-info {"album" (album-info 6)} "The Author")})
+             {"author"
+              (artist-info
+               {"album" (->Album 6 "someAlbumName"  "largeAlbumUrl" "AlbumUrl")}
+               "The Author")}))
+
+      (is (= (fetch-album-details {"author" (artist-info {"album" (album-info 6)
+                                                          "album2" (album-info 6)}
+                                                         "The Author")})
+             {"author"
+              (artist-info
+               {"album" (->Album 6 "someAlbumName"  "largeAlbumUrl" "AlbumUrl")
+                "album2" (->Album 6 "someAlbumName"  "largeAlbumUrl" "AlbumUrl")}
+               "The Author")}))
+
+      (is (= (fetch-album-details {"author" (artist-info {"album" (album-info 6)
+                                                          "album2" (album-info 6)}
+                                                         "The Author")
+
+                                   "author2" (artist-info {"album3" (album-info 6)
+                                                           "album4" (album-info 6)}
+                                                          "The Author2")})
+             {"author"
+              (artist-info
+               {"album" (->Album 6 "someAlbumName"  "largeAlbumUrl" "AlbumUrl")
+                "album2" (->Album 6 "someAlbumName"  "largeAlbumUrl" "AlbumUrl")}
+               "The Author")
+              "author2"
+              (artist-info
+               {"album3" (->Album 6 "someAlbumName"  "largeAlbumUrl" "AlbumUrl")
+                "album4" (->Album 6 "someAlbumName"  "largeAlbumUrl" "AlbumUrl")}
+               "The Author2")})))))
+
 (deftest html-diff-generation
   (testing "album-info creates correct hiccup structure"
     (is (= (album-info-html (->Album 12 "someAlbumName" "imageUrl" "albumUrl"))
