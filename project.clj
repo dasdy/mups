@@ -4,7 +4,6 @@
   :license {:name "MIT License"
             :url "https://mit-license.org/"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [zsau/id3 "0.1.2"]
                  [cheshire "5.8.0"]
                  [claudio "0.1.3"]
                  [http-kit "2.2.0"]
