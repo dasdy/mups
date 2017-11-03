@@ -204,6 +204,19 @@
            {"author" (artist-info {})
             "author2" (artist-info {})}))))
 
+(deftest mapping-tests
+  (testing "mapping non-existing author"
+    (is (= (map-collection {"the author" (artist-info {"some-album" (album-info 5)} "The Author")}
+                       (->CollectionMapping {"The Author" "Author"} {}))
+           {"author" (artist-info {"some-album" (album-info 5)} "The Author")})))
+  (testing "mapping existing author"
+    (is (= (map-collection {"the author" (artist-info {"some-album" (album-info 5)} "The Author")
+                            "author" (artist-info {"some-album2" (album-info 6)} "Author")}
+                       (->CollectionMapping {"The Author" "Author"} {}))
+           {"author" (artist-info {"some-album" (album-info 5)
+                                   "some-album2" (album-info 6)}
+                                  "Author")}))))
+
 (deftest diff-tests
   (testing "find missing albums in one author"
     (is (= (find-author-missing-albums (artist-info {"a" (album-info 1 "a") "b" (album-info 1 "b")} "artist")

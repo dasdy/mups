@@ -104,3 +104,37 @@
            [k (assoc v :albums removed-author-albums)]))
        collection-without-ignored-authors))
     collection))
+
+(defn map-collection [collection collection-mapping]
+  (let [lower-case-mapper (fn [[k v]] [(.toLowerCase k) (.toLowerCase v)])
+        merge-artists (fn [a1 a2]
+                        (let [name (or (:display-name a2) (:display-name a1))
+                              albums (merge (:albums a1) (:albums a2))
+                              url (or (:url a2) (:url a1))]
+                          (->Artist name albums url)))
+        artist-mappings (:artist-mappings collection-mapping)
+        artist-mappings (map-into-table lower-case-mapper artist-mappings)]
+    (reduce
+     (fn [new-coll [artist-name artist-info]]
+       (let [new-name (get artist-mappings artist-name artist-name)
+             other-artist-info (get new-coll new-name)
+             new-artist-info (merge-artists other-artist-info artist-info)]
+         (assoc new-coll new-name new-artist-info)))
+     {}
+     collection)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
