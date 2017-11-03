@@ -58,7 +58,7 @@
         albums (vals (:albums author-info))]
     (or (> total-songs 5)
         (and (> album-count 1)
-             (every? #(> % 1) (map #(:song-count %) albums))))))
+             (every? #(> % 1) (map :song-count albums))))))
 
 (defn only-listened-authors [collection]
   (into {} (filter author-is-listened collection)))

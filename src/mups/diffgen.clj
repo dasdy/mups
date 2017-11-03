@@ -25,7 +25,7 @@
   (spit path (make-json-diff-string diff)))
 
 (defn remove-nil [lst]
-  (vec (filter (complement nil?) lst)))
+  (filterv (complement nil?) lst))
 
 (defn album-info-html [album-info]
   (let [song-count (:song-count album-info nil)
@@ -34,9 +34,8 @@
                            (str "(" song-count ")" album-title)
                            (str "(?)" album-title))
         image-url (:image-url album-info)
-        image-item (if image-url
-                     [:img {:src image-url :height 120}]
-                     nil)
+        image-item (when image-url
+                     [:img {:src image-url :height 120}])
         album-url (:album-url album-info)
         album-item (if album-url
                      [:a {:href album-url} album-title-text]
@@ -53,7 +52,7 @@
     (albums-list-html diff-item)]])
 
 (defn artist-name-elem [artist-name diff]
-  (let [actual-artist-name (:display-name diff artist-name)]
+  (let [actual-artist-name (:artist-name diff artist-name)]
    (if-let [artist-url (:artist-url diff)]
      [:a {:href artist-url} actual-artist-name]
      actual-artist-name)))
@@ -65,8 +64,7 @@
            (diff-item-html "you have" (:user-albums diff))
            (diff-item-html "you miss" (:missing-albums diff))
            (diff-item-html "both have" (:common-albums diff))]))
-       (sort-by (fn [[artist-name _]] artist-name)
-                  artist-list)))
+       (sort-by (fn [[artist-name _]] artist-name) artist-list)))
 
 (defn grouped-artists-list-html [artist-list]
   (let [groups (group-by (fn [[artist-name _]]
