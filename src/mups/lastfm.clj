@@ -1,6 +1,6 @@
 (ns mups.lastfm
   (:require [org.httpkit.client :as http]
-            [mups.utils :refer [map-into-table]]
+            [mups.utils :refer [map-into-table file-exists]]
             [clojure.java.io :as io]
             [cheshire.core :as json]
             [mups.data :refer [->Artist ->Album]]))
@@ -15,11 +15,11 @@
     bodies))
 
 (def api-key (let [res (io/resource "api-key")]
-               (if (and res (.exists res)) (slurp res)
+               (if (file-exists res) (slurp res)
                    (System/getenv "LASTFM_API"))))
 
 ;; (def private-key (let [res (io/resource "shared-secret")]
-;;                    (if (and res (.exists res))
+;;                    (if (file-exists res)
 ;;                      (slurp res)
 ;;                      (System/getenv "LASTFM_PRIVATEKEY"))))
 

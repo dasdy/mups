@@ -8,7 +8,7 @@
                  [claudio "0.1.3"]
                  [http-kit "2.2.0"]
                  [org.clojure/tools.cli "0.3.5"]
-                 [swiss-arrows "1.0.0"]
+                 [mock-clj "0.1.0"]
                  [hiccup "1.0.5"]]
   :main mups.cli
   :aot [mups.cli]

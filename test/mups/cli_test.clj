@@ -8,7 +8,9 @@
             [mups.diffgen :refer :all]
             [mups.collection :refer :all]
             [mups.cli :refer :all]
-            [mups.data :refer :all]))
+            [mups.data :refer :all]
+            [mups.utils :refer :all]
+            [mock-clj.core :as mc]))
 
 (defn album-info [track-count & [album-name]]
   (->Album track-count album-name nil nil))
@@ -122,6 +124,50 @@
        (is (= (set (map #(.getName %) (get-all-mp3-in-dir ".")))
               #{"file1.mp3" "file2.mp3" "file3.mp3"}))))))
 
+(deftest build-full-collection-tests
+  (testing "passing music-path will result in calling get-all-mp3-tags"
+    (mc/with-mock [get-all-mp3-tags-in-dir []]
+      (build-full-collection "some-path" nil)
+      (is (mc/called? get-all-mp3-tags-in-dir))))
+  (testing "passing only cache will result in reading cache"
+    (mc/with-mock [get-all-mp3-tags-in-dir []
+                   file-exists true
+                   read-collection {}]
+      (build-full-collection nil "path-to-cache")
+      (is (not (mc/called? get-all-mp3-tags-in-dir)))
+      (is (mc/called? read-collection))))
+  (testing "passing both cache and music path will merge collections"
+    (mc/with-mock [get-all-mp3-tags-in-dir [1 2 3]
+                   file-exists true
+                   read-collection {4 5}
+                   build-collection {}]
+      (build-full-collection "path-to-music" "path-to-cache")
+      (is (mc/called? get-all-mp3-tags-in-dir))
+      (is (mc/called? read-collection))
+      (is (= (mc/last-call build-collection) [[1 2 3] {4 5}])))))
+
+(deftest build-user-collection-tests
+  (testing "uses only-listened authors and remove-ignored, returns same collection"
+    (mc/with-mock [build-full-collection
+                   {"author" (artist-info {"album" (album-info 15)
+                                           "ignored-album" (album-info 10)})}]
+      (is (= (build-user-collection "some-path" "other-path" (->IgnoreCollection [] ["ignored-album"] []))
+             {"author" (artist-info {"album" (album-info 15)})})))))
+
+(deftest fetch-details-in-scanned-collection-tests
+  (testing "fetch downloads detailed info about author and not-ignored albums"
+    (mc/with-mock [get-authors-from-lastfm {"author" (artist-info {"album" (album-info 15)
+                                                                   "ignored-album" (album-info 10)})}
+                   fetch-album-details {}]
+      (is (= (fetch-details-in-scanned-collection
+              {"author" (artist-info {"album" (album-info 15)})}
+              (->IgnoreCollection [] ["ignored-album"] []))
+             {}))
+      (is (mc/called? get-authors-from-lastfm))
+      (is (= (mc/last-call fetch-album-details)
+             [{"author" (artist-info {"album" (album-info 15)})}])
+          "remove-ignored should have removed ignored-album after it was fetched by get-auhors-form-lastfm"))))
+
 (deftest author-is-listened-tests
   (testing "is-listened?"
     (is (author-is-listened ["author" (artist-info {"a" (album-info 5) "b" (album-info 9)})]))
@@ -171,11 +217,11 @@
            (parse-prog-options ["--ignore-path=ignore" "--output=out"
                                 "--music-path=music" "--cached-path=cache"
                                 "--lastfm=lastfm"])))
-    (is (= ["music" "cache" "diff.html" "ignore" "lastfm-collection.json"]
+    (is (= ["music" "cache" "diff.html" "ignore" nil]
            (parse-prog-options ["--ignore-path=ignore"
                                 "--music-path=music"
                                 "--cached-path=cache"])))
-    (is (=  ["music" "cache.json" "diff.html" nil "lastfm-collection.json"]
+    (is (=  ["music" nil "diff.html" nil nil]
            (parse-prog-options ["--music-path=music"])))
     (is (validate-args ["music" nil "diff.json" nil nil]))
     (is (validate-args [nil "cache" nil nil nil]))
