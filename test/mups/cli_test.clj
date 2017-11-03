@@ -186,23 +186,24 @@
                                                    "album4" (album-info 4)})
                             "author2" (artist-info {"album1" (album-info 2)
                                                     "album4" (album-info 5)})}
-                           {"authors" ["author2"]
-                            "albums" ["album1" "album3"]
-                            "author_albums" {"author" ["album2"]}})
-           {"author" (artist-info {"album4" (album-info 4)})}))
-    (is (= (remove-singles {"author" (artist-info {"s" (album-info 1) "s3" (album-info 2)})
-                            "author2" (artist-info {"x" (album-info 2) "k" (album-info 1)})})
-           {"author" (artist-info {"s3" (album-info 2)})
-            "author2" (artist-info {"x" (album-info 2)})}))
+                           (->IgnoreCollection ["author2"] ["album1" "album3"] {"author" ["album2"]}))
+           {"author" (artist-info {"album4" (album-info 4)})}))))
 
-    (is (= (remove-singles {"author" (artist-info {"s" (album-info 1) "s3" nil})
-                            "author2" (artist-info {"x" (album-info 2) "k" (album-info 1)})})
-           {"author" (artist-info {})
-            "author2" (artist-info {"x" (album-info 2)})}))
-    (is (= (remove-singles {"author" (artist-info {"s[single]" (album-info 12) "s3 - single" (album-info 13)})
-                            "author2" (artist-info {"x (single)" (album-info 2) "k single" (album-info 10)})})
-           {"author" (artist-info {})
-            "author2" (artist-info {})}))))
+(deftest remove-singles-test
+  (testing "removing singles"
+   (is (= (remove-singles {"author" (artist-info {"s" (album-info 1) "s3" (album-info 2)})
+                           "author2" (artist-info {"x" (album-info 2) "k" (album-info 1)})})
+          {"author" (artist-info {"s3" (album-info 2)})
+           "author2" (artist-info {"x" (album-info 2)})}))
+
+   (is (= (remove-singles {"author" (artist-info {"s" (album-info 1) "s3" nil})
+                           "author2" (artist-info {"x" (album-info 2) "k" (album-info 1)})})
+          {"author" (artist-info {})
+           "author2" (artist-info {"x" (album-info 2)})}))
+   (is (= (remove-singles {"author" (artist-info {"s[single]" (album-info 12) "s3 - single" (album-info 13)})
+                           "author2" (artist-info {"x (single)" (album-info 2) "k single" (album-info 10)})})
+          {"author" (artist-info {})
+           "author2" (artist-info {})}))))
 
 (deftest mapping-tests
   (testing "mapping non-existing author"

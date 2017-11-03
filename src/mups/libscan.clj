@@ -92,9 +92,9 @@
 
 (defn remove-ignored [collection ignore-collection]
   (if ignore-collection
-    (let [authors (get ignore-collection "authors")
-          albums (get ignore-collection "albums")
-          author_albums (get ignore-collection "author_albums")
+    (let [authors (:ignored-authors ignore-collection)
+          albums (:ignored-albums ignore-collection)
+          author_albums (:ignored-author-albums ignore-collection)
           collection-without-ignored-authors (apply dissoc collection authors)]
       (map-into-table
        (fn [[k v]]
@@ -122,19 +122,4 @@
          (assoc new-coll new-name new-artist-info)))
      {}
      collection)))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
