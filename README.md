@@ -83,9 +83,9 @@ Fields `album-url` and `image-url` are only present for last.fm cache file
 
 2. Ignore file - json file to provide facility of ignoring entire bands, all albums with a certain title, or certain albums of some author:
   ```JSON
-  { "authors" : ["author name"],
-    "albums": ["album title"],
-    "author_albums": [{"author" : ["album title"]}]
+  { "ignored_authors" : ["author name"],
+    "ignored_albums": ["album title"],
+    "ignored_author_albums": [{"author" : ["album title"]}]
   }
   ```
 
