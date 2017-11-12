@@ -25,10 +25,10 @@
 
 (defn author-song-count
   ([author-info]
-    (reduce + (map #(:song-count % 0) (vals (:albums author-info)))))
+   (reduce + (map #(:song-count % 0) (vals (:albums author-info)))))
   ([collection author-name]
-  (let [author-info (get collection author-name)]
-      (author-song-count author-info))))
+   (let [author-info (get collection author-name)]
+       (author-song-count author-info))))
 
 (defn walk [dirpath pattern]
   (doall (filter #(re-matches pattern (.getName %))
@@ -122,4 +122,3 @@
          (assoc new-coll new-name new-artist-info)))
      {}
      collection)))
-

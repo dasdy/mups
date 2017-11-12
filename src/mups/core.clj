@@ -2,7 +2,7 @@
      (:require [clojure.java.io :refer [file]]
                [mups.libscan :refer [build-collection remove-ignored
                                      only-listened-authors get-all-mp3-tags-in-dir
-                                     diff-collections ]]
+                                     diff-collections]]
                [mups.collection :refer [save-collection read-collection]]
                [mups.lastfm :refer [fetch-album-details get-authors-from-lastfm
                                     remove-singles]]

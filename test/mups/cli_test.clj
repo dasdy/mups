@@ -36,7 +36,7 @@
                              "artist2" (artist-info {"album3" (album-info 6)})
                              "artist3" (artist-info {"album4" (album-info 8)})})
            {"artist1" (artist-info {"album" (album-info 1)
-                        "album2" (album-info 4)})
+                                    "album2" (album-info 4)})
             "artist2" (artist-info {"album3" (album-info 6)})
             "artist3" (artist-info {"album4" (album-info 8)})})))
   (testing "add-author to non-existing authors"
@@ -173,11 +173,11 @@
     (is (author-is-listened ["author" (artist-info {"a" (album-info 5) "b" (album-info 9)})]))
     (is (not (author-is-listened ["author" (artist-info {"a" (album-info 5)})])))
     (is (author-is-listened ["author" (artist-info {"a" (album-info 1)
-                                        "b" (album-info 1)
-                                        "c" (album-info 1)
-                                        "d" (album-info 1)
-                                        "e" (album-info 1)
-                                        "f" (album-info 1)})]))
+                                                    "b" (album-info 1)
+                                                    "c" (album-info 1)
+                                                    "d" (album-info 1)
+                                                    "e" (album-info 1)
+                                                    "f" (album-info 1)})]))
     (is (not (author-is-listened ["author"
                                   {:albums
                                    {"a" (album-info 1)
@@ -242,8 +242,8 @@
   (testing "removing singles"
     (is (= (remove-singles {"author" (artist-info {"s" (album-info 1)
                                                    "s3" (album-info 2)})
-                           "author2" (artist-info {"x" (album-info 2)
-                                                   "k" (album-info 1)})})
+                            "author2" (artist-info {"x" (album-info 2)
+                                                    "k" (album-info 1)})})
           {"author" (artist-info {"s3" (album-info 2)})
            "author2" (artist-info {"x" (album-info 2)})}))
 
@@ -301,16 +301,16 @@
   (testing "saving diff"
     (with-redefs [spit (fn [_ data] data)]
       (is (= (save-diff :json {"author" {"you have" [] "you miss" [] "both have" []}} "")
-              "{\n  \"author\" : {\n    \"both have\" : [ ],\n    \"you have\" : [ ],\n    \"you miss\" : [ ]\n  }\n}"))
+             "{\n  \"author\" : {\n    \"both have\" : [ ],\n    \"you have\" : [ ],\n    \"you miss\" : [ ]\n  }\n}"))
       (is (= (clojure.string/replace
                              (save-diff :json {"author"
                                                {"you have" [(album-info 4 "b") (album-info 1 "a")]
-                                   "you miss" []`
-                                   "both have" []}}
-                           "")
-                              #"\s"
+                                                "you miss" []`
+                                                "both have" []}}
                               "")
-       "{\"author\":{\"bothhave\":[],\"youhave\":[{\"song-count\":4,\"title\":\"b\",\"image-url\":null,\"album-url\":null},{\"song-count\":1,\"title\":\"a\",\"image-url\":null,\"album-url\":null}],\"youmiss\":[]}}")))))
+                             #"\s"
+                             "")
+           "{\"author\":{\"bothhave\":[],\"youhave\":[{\"song-count\":4,\"title\":\"b\",\"image-url\":null,\"album-url\":null},{\"song-count\":1,\"title\":\"a\",\"image-url\":null,\"album-url\":null}],\"youmiss\":[]}}")))))
 
 (deftest get-author-from-lastfm-tests
   (testing "request-test")
@@ -321,20 +321,20 @@
           (lastfm-getalbums-url "ArtistName")))))
   (testing "get-authors-from-lastfm returns items with full author-info"
     (let [three-albums {"album" (album-info 1)
-                       "album2" (album-info 1)
-                       "album3" (album-info 1)}]
-    (with-redefs [api-key "someapikey"
-                  concur-get
-                  (fn [urls]
-                    (repeat (count urls)
-                            {:body "dummy_response_body"}))
-                  author-response->author-info (constantly three-albums)]
-     (is (= {"author1" three-albums
-             "author2" three-albums
-             "author3" three-albums}
-            (get-authors-from-lastfm {"author1" {"album" (album-info 12)}
-                                      "author2" {"album2" (album-info 3)}
-                                      "author3" {"album3" (album-info 5)}}))))))
+                        "album2" (album-info 1)
+                        "album3" (album-info 1)}]
+     (with-redefs [api-key "someapikey"
+                   concur-get
+                   (fn [urls]
+                     (repeat (count urls)
+                             {:body "dummy_response_body"}))
+                   author-response->author-info (constantly three-albums)]
+      (is (= {"author1" three-albums
+              "author2" three-albums
+              "author3" three-albums}
+             (get-authors-from-lastfm {"author1" {"album" (album-info 12)}
+                                       "author2" {"album2" (album-info 3)}
+                                       "author3" {"album3" (album-info 5)}}))))))
   (testing "response -> album-info"
     (is (= (albums-from-lastfm {"topalbums" {"album" [{"name" "aLbuM1"
                                                        "artist" {"name" "artist1"}}
@@ -365,15 +365,15 @@
   (testing "fetch-album-returns-map-from-responses"
     (with-redefs [api-key "some-api-key"
                   concur-get (fn [urls] (map (constantly
-                                             (generate-string {"album"
-                                                               {"name" "someAlbumName"
-                                                                "artist" "someArtistName"
-                                                                "url" "AlbumUrl"
-                                                                "image" [{"#text" "smallAlbumUrl"
-                                                                          "size" "small"}
-                                                                         {"#text" "largeAlbumUrl"
-                                                                          "size" "large"}]
-                                                                "tracks" {"track" [1 2 3 4 5 6]}}}))
+                                              (generate-string {"album"
+                                                                {"name" "someAlbumName"
+                                                                 "artist" "someArtistName"
+                                                                 "url" "AlbumUrl"
+                                                                 "image" [{"#text" "smallAlbumUrl"
+                                                                           "size" "small"}
+                                                                          {"#text" "largeAlbumUrl"
+                                                                           "size" "large"}]
+                                                                 "tracks" {"track" [1 2 3 4 5 6]}}}))
                                             urls))]
       (is (= (fetch-album-details {"author" (artist-info {"album" (album-info 6)} "The Author")})
              {"author"
